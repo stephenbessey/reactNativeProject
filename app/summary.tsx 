@@ -1,0 +1,175 @@
+import React from 'react';
+import { View, Text, StyleSheet, ScrollView } from 'react-native';
+import { router, useLocalSearchParams } from 'expo-router';
+import { ScreenContainer } from '../components/ScreenContainer';
+import { SelectionButton } from '../components/SelectionButton';
+import { Ionicons } from '@expo/vector-icons';
+
+export default function SummaryScreen() {
+  const { username, userType, selectedPartners, selectedDays } = useLocalSearchParams<{
+    username: string;
+    userType: string;
+    selectedPartners: string;
+    selectedDays: string;
+  }>();
+
+  const partners = selectedPartners ? JSON.parse(selectedPartners) : [];
+  const days = selectedDays ? JSON.parse(selectedDays) : [];
+
+  const handleStartOver = (): void => {
+    router.dismissAll();
+    router.replace('/');
+  };
+
+  const handleStartWorkout = (): void => {
+    console.log('Starting workout management with:', { username, userType, partners, days });
+  };
+
+  const getNextStepsText = (): string => {
+    return userType === 'coach'
+      ? 'You can now create daily workouts for your trainees and track their progress.'
+      : 'You will receive daily workouts from your coach and can provide feedback.';
+  };
+
+  const getWorkflowDescription = (): string => {
+    return userType === 'coach'
+      ? 'Create workouts → Monitor completion → Review feedback'
+      : 'Receive workouts → Complete exercises → Provide feedback';
+  };
+
+  return (
+    <ScreenContainer>
+      <View style={styles.header}>
+        <Ionicons name="checkmark-circle" size={60} color="#4CAF50" />
+        <Text style={styles.title}>Setup Complete!</Text>
+        <Text style={styles.subtitle}>Your workout partnership is ready</Text>
+      </View>
+
+      <ScrollView style={styles.summaryContent} showsVerticalScrollIndicator={false}>
+        <View style={styles.summarySection}>
+          <Text style={styles.sectionTitle}>Your Profile</Text>
+          <View style={styles.summaryItem}>
+            <Text style={styles.itemLabel}>Name:</Text>
+            <Text style={styles.itemValue}>{username}</Text>
+          </View>
+          <View style={styles.summaryItem}>
+            <Text style={styles.itemLabel}>Role:</Text>
+            <Text style={styles.itemValue}>{userType}</Text>
+          </View>
+        </View>
+
+        <View style={styles.summarySection}>
+          <Text style={styles.sectionTitle}>
+            {userType === 'coach' ? 'Your Trainees' : 'Your Coaches'}
+          </Text>
+          {partners.map((partner: { name: string; type: string }, index: number) => (
+            <View key={index} style={styles.summaryItem}>
+              <Ionicons name="person" size={16} color="#007AFF" />
+              <Text style={styles.itemValue}>{partner.name}</Text>
+            </View>
+          ))}
+        </View>
+
+        <View style={styles.summarySection}>
+          <Text style={styles.sectionTitle}>Workout Days</Text>
+          {days.map((day: string, index: number) => (
+            <View key={index} style={styles.summaryItem}>
+              <Ionicons name="calendar" size={16} color="#007AFF" />
+              <Text style={styles.itemValue}>{day}</Text>
+            </View>
+          ))}
+        </View>
+
+        <View style={styles.workflowSection}>
+          <Text style={styles.sectionTitle}>Your Workflow</Text>
+          <Text style={styles.workflowText}>{getWorkflowDescription()}</Text>
+          <Text style={styles.nextStepsText}>{getNextStepsText()}</Text>
+        </View>
+      </ScrollView>
+
+      <View style={styles.actionButtons}>
+        <SelectionButton
+          title="Start Managing Workouts"
+          variant="primary"
+          onPress={handleStartWorkout}
+        />
+        <SelectionButton
+          title="Start Over"
+          onPress={handleStartOver}
+        />
+      </View>
+    </ScreenContainer>
+  );
+}
+
+const styles = StyleSheet.create({
+  header: {
+    alignItems: 'center',
+    marginBottom: 30,
+  },
+  title: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    color: '#000000',
+    marginTop: 16,
+    marginBottom: 8,
+  },
+  subtitle: {
+    fontSize: 16,
+    color: '#666666',
+  },
+  summaryContent: {
+    flex: 1,
+  },
+  summarySection: {
+    marginBottom: 24,
+    backgroundColor: '#F8F9FA',
+    padding: 16,
+    borderRadius: 12,
+  },
+  workflowSection: {
+    marginBottom: 24,
+    backgroundColor: '#E3F2FD',
+    padding: 16,
+    borderRadius: 12,
+  },
+  sectionTitle: {
+    fontSize: 18,
+    fontWeight: '600',
+    color: '#000000',
+    marginBottom: 12,
+  },
+  summaryItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 8,
+    gap: 8,
+  },
+  itemLabel: {
+    fontSize: 16,
+    fontWeight: '500',
+    color: '#333333',
+    minWidth: 60,
+  },
+  itemValue: {
+    fontSize: 16,
+    color: '#666666',
+    flex: 1,
+  },
+  workflowText: {
+    fontSize: 16,
+    fontWeight: '500',
+    color: '#1976D2',
+    marginBottom: 8,
+  },
+  nextStepsText: {
+    fontSize: 14,
+    color: '#666666',
+    lineHeight: 20,
+  },
+  actionButtons: {
+    marginTop: 20,
+    marginBottom: 20,
+    gap: 12,
+  },
+});

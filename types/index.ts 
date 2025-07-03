@@ -1,0 +1,37 @@
+export interface User {
+  id: string;
+  name: string;
+  type: 'coach' | 'trainee';
+  username: string;
+}
+
+export interface WorkoutPartner {
+  id: string;
+  name: string;
+  type: 'coach' | 'trainee';
+  isSelected: boolean;
+}
+
+export interface WorkoutDay {
+  id: string;
+  day: string;
+  isSelected: boolean;
+}
+
+export interface Exercise {
+  id: string;
+  name: string;
+  sets: number;
+  reps: number;
+  weight?: number;
+  notes?: string;
+}
+
+export interface DailyWorkout {
+  id: string;
+  day: string;
+  exercises: Exercise[];
+  isCompleted: boolean;
+  completedAt?: Date;
+  feedback?: string;
+}
