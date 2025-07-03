@@ -1,6 +1,6 @@
-import { useState } from 'react';
+import{ useState } from 'react';
 import { User, WorkoutPartner, WorkoutDay } from '../types';
-import { MOCK_COACHES, MOCK_TRAINEES, WORKOUT_DAYS } from '../constants/workoutData';
+import { MOCK_COACHES, MOCK_TRAINEES, WORKOUT_DAYS } from '../constants/workoutData.ts';
 
 export const useWorkoutSetup = () => {
   const [user, setUser] = useState<User | null>(null);
