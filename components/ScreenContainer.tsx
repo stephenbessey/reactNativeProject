@@ -1,5 +1,6 @@
 import React from 'react';
-import { View, SafeAreaView, StyleSheet } from 'react-native';
+import { View, SafeAreaView } from 'react-native';
+import { commonStyles } from '../styles/commonStyles';
 
 interface ScreenContainerProps {
   children: React.ReactNode;
@@ -7,22 +8,10 @@ interface ScreenContainerProps {
 
 export const ScreenContainer: React.FC<ScreenContainerProps> = ({ children }) => {
   return (
-    <SafeAreaView style={styles.safeArea}>
-      <View style={styles.container}>
+    <SafeAreaView style={commonStyles.safeArea}>
+      <View style={commonStyles.container}>
         {children}
       </View>
     </SafeAreaView>
   );
 };
-
-const styles = StyleSheet.create({
-  safeArea: {
-    flex: 1,
-    backgroundColor: '#FFFFFF',
-  },
-  container: {
-    flex: 1,
-    paddingHorizontal: 20,
-    paddingTop: 20,
-  },
-});

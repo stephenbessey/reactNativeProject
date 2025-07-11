@@ -1,5 +1,6 @@
 import React from 'react';
 import { View, Text, TextInput, StyleSheet } from 'react-native';
+import { COLORS, DIMENSIONS } from '../constants';
 
 interface FormInputProps {
   label: string;
@@ -27,9 +28,9 @@ export const FormInput: React.FC<FormInputProps> = ({
         value={value}
         onChangeText={onChangeText}
         placeholder={placeholder}
-        placeholderTextColor="#999999"
+        placeholderTextColor={COLORS.TEXT_TERTIARY}
         accessibilityLabel={label}
-        accessibilityRequired={required}
+        accessibilityHint={required ? 'Required field' : undefined}
       />
     </View>
   );
@@ -37,24 +38,24 @@ export const FormInput: React.FC<FormInputProps> = ({
 
 const styles = StyleSheet.create({
   container: {
-    marginVertical: 12,
+    marginVertical: DIMENSIONS.SPACING_MEDIUM,
   },
   label: {
-    fontSize: 16,
+    fontSize: DIMENSIONS.FONT_SIZE_MEDIUM,
     fontWeight: '600',
-    marginBottom: 8,
-    color: '#000000',
+    marginBottom: DIMENSIONS.SPACING_SMALL,
+    color: COLORS.TEXT_PRIMARY,
   },
   required: {
-    color: '#FF3333',
+    color: COLORS.ERROR,
   },
   input: {
     borderWidth: 1,
-    borderColor: '#DDDDDD',
-    borderRadius: 8,
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-    fontSize: 16,
-    backgroundColor: '#FFFFFF',
+    borderColor: COLORS.BORDER_LIGHT,
+    borderRadius: DIMENSIONS.SPACING_SMALL,
+    paddingHorizontal: DIMENSIONS.SPACING_MEDIUM,
+    paddingVertical: DIMENSIONS.SPACING_MEDIUM,
+    fontSize: DIMENSIONS.FONT_SIZE_MEDIUM,
+    backgroundColor: COLORS.BACKGROUND_WHITE,
   },
 });

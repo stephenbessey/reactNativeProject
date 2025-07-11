@@ -1,18 +1,22 @@
 import React from 'react';
-import { View, Text, StyleSheet, ScrollView } from 'react-native';
-import { router, useLocalSearchParams } from 'expo-router';
+import { View, ScrollView } from 'react-native';
+import { useLocalSearchParams } from 'expo-router';
 import { ScreenContainer } from '../components/ScreenContainer';
 import { SelectionButton } from '../components/SelectionButton';
+import { PageHeader } from '../components/sections/PageHeader';
 import { useWorkoutSetup } from '../hooks/useWorkoutSetup';
+import { useWorkoutNavigation } from '../hooks/useWorkoutNavigation';
+import { validateSelections } from '../utils/validation';
+import { parseJsonSafely } from '../utils/dataTransformers';
+import { getActionText } from '../utils/userHelpers';
+import { UserType, WorkoutPartner } from '../types';
+import { commonStyles } from '../styles/commonStyles';
 
 export default function DaySelectScreen() {
-  const { username, userType, selectedPartners } = useLocalSearchParams<{
-    username: string;
-    userType: string;
-    selectedPartners: string;
-  }>();
+  const { username, userType, selectedPartners } = useLocalSearchParams<Record<string, string>>();
 
   const { workoutDays, toggleDaySelection, getSelectedDays } = useWorkoutSetup();
+  const { navigateToSummary } = useWorkoutNavigation();
 
   const handleDayToggle = (dayId: string): void => {
     toggleDaySelection(dayId);
@@ -21,35 +25,31 @@ export default function DaySelectScreen() {
   const handleFinish = (): void => {
     const selectedDays = getSelectedDays();
 
-    if (selectedDays.length === 0) {
+    if (!validateSelections(selectedDays)) {
       return;
     }
 
-    router.push({
-      pathname: '/summary',
-      params: {
-        username,
-        userType,
-        selectedPartners,
-        selectedDays: JSON.stringify(selectedDays.map(d => d.day)),
-      }
-    });
+    const partners = parseJsonSafely<WorkoutPartner[]>(selectedPartners, []);
+    navigateToSummary(username!, userType as UserType, partners, selectedDays);
   };
 
-  const selectedCount = getSelectedDays().length;
-  const actionText = userType === 'coach' ? 'create workouts' : 'receive workouts';
+  const selectedDays = getSelectedDays();
+  const selectedCount = selectedDays.length;
+  const actionText = getActionText(userType as UserType);
+
+  const getSubtitle = (): string => {
+    const baseText = `Choose which days you want to ${actionText}`;
+    return selectedCount > 0 ? `${baseText} (${selectedCount} selected)` : baseText;
+  };
 
   return (
     <ScreenContainer>
-      <View style={styles.header}>
-        <Text style={styles.title}>Select workout days</Text>
-        <Text style={styles.subtitle}>
-          Choose which days you want to {actionText}
-          {selectedCount > 0 && ` (${selectedCount} selected)`}
-        </Text>
-      </View>
+      <PageHeader 
+        title="Select workout days"
+        subtitle={getSubtitle()}
+      />
 
-      <ScrollView style={styles.dayList} showsVerticalScrollIndicator={false}>
+      <ScrollView style={commonStyles.listContainer} showsVerticalScrollIndicator={false}>
         {workoutDays.map((day) => (
           <SelectionButton
             key={day.id}
@@ -60,7 +60,7 @@ export default function DaySelectScreen() {
         ))}
       </ScrollView>
 
-      <View style={styles.finishSection}>
+      <View style={commonStyles.actionContainer}>
         <SelectionButton
           title="Complete Setup"
           variant="primary"
@@ -71,26 +71,3 @@ export default function DaySelectScreen() {
     </ScreenContainer>
   );
 }
-
-const styles = StyleSheet.create({
-  header: {
-    marginBottom: 30,
-  },
-  title: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    color: '#000000',
-    marginBottom: 8,
-  },
-  subtitle: {
-    fontSize: 16,
-    color: '#666666',
-  },
-  dayList: {
-    flex: 1,
-  },
-  finishSection: {
-    marginTop: 20,
-    marginBottom: 20,
-  },
-});

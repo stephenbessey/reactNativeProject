@@ -1,3 +1,5 @@
+import { WorkoutDay, WorkoutPartner } from '../types';
+
 export const WORKOUT_DAYS: WorkoutDay[] = [
   { id: '1', day: 'Monday', isSelected: false },
   { id: '2', day: 'Tuesday', isSelected: false },

@@ -1,5 +1,6 @@
 import React from 'react';
 import { Pressable, Text, StyleSheet, ViewStyle, TextStyle } from 'react-native';
+import { COLORS, DIMENSIONS } from '../constants';
 
 interface SelectionButtonProps {
   title: string;
@@ -9,6 +10,8 @@ interface SelectionButtonProps {
   disabled?: boolean;
 }
 
+type ButtonState = 'disabled' | 'primary' | 'selected' | 'default';
+
 export const SelectionButton: React.FC<SelectionButtonProps> = ({
   title,
   isSelected = false,
@@ -16,30 +19,34 @@ export const SelectionButton: React.FC<SelectionButtonProps> = ({
   variant = 'secondary',
   disabled = false,
 }) => {
+  const getButtonState = (): ButtonState => {
+    if (disabled) return 'disabled';
+    if (variant === 'primary') return 'primary';
+    if (isSelected) return 'selected';
+    return 'default';
+  };
+
   const getButtonStyle = (): ViewStyle => {
-    const baseStyle = styles.button;
+    const buttonState = getButtonState();
+    const stateStyles = {
+      disabled: styles.buttonDisabled,
+      primary: styles.buttonPrimary,
+      selected: styles.buttonSelected,
+      default: styles.buttonDefault,
+    };
 
-    if (disabled) {
-      return { ...baseStyle, ...styles.buttonDisabled };
-    }
-
-    if (variant === 'primary') {
-      return { ...baseStyle, ...styles.buttonPrimary };
-    }
-
-    return isSelected
-      ? { ...baseStyle, ...styles.buttonSelected }
-      : { ...baseStyle, ...styles.buttonDefault };
+    return { ...styles.button, ...stateStyles[buttonState] };
   };
 
   const getTextStyle = (): TextStyle => {
-    if (disabled) {
-      return { ...styles.buttonText, ...styles.textDisabled };
-    }
-
-    return variant === 'primary' || isSelected
-      ? { ...styles.buttonText, ...styles.textSelected }
-      : { ...styles.buttonText, ...styles.textDefault };
+    const buttonState = getButtonState();
+    const isLight = buttonState === 'primary' || buttonState === 'selected';
+    
+    return {
+      ...styles.buttonText,
+      color: disabled ? COLORS.TEXT_DISABLED : 
+             isLight ? COLORS.TEXT_WHITE : COLORS.TEXT_WHITE,
+    };
   };
 
   return (
@@ -61,40 +68,31 @@ export const SelectionButton: React.FC<SelectionButtonProps> = ({
 
 const styles = StyleSheet.create({
   button: {
-    paddingVertical: 16,
-    paddingHorizontal: 24,
-    borderRadius: 25,
-    marginVertical: 8,
-    minHeight: 50,
+    paddingVertical: DIMENSIONS.BUTTON_PADDING_VERTICAL,
+    paddingHorizontal: DIMENSIONS.BUTTON_PADDING_HORIZONTAL,
+    borderRadius: DIMENSIONS.BUTTON_BORDER_RADIUS,
+    marginVertical: DIMENSIONS.SPACING_SMALL,
+    minHeight: DIMENSIONS.BUTTON_HEIGHT,
     justifyContent: 'center',
     alignItems: 'center',
   },
   buttonDefault: {
-    backgroundColor: '#000000',
+    backgroundColor: COLORS.SECONDARY,
   },
   buttonSelected: {
-    backgroundColor: '#333333',
+    backgroundColor: COLORS.TEXT_SECONDARY,
   },
   buttonPrimary: {
-    backgroundColor: '#007AFF',
+    backgroundColor: COLORS.PRIMARY,
   },
   buttonDisabled: {
-    backgroundColor: '#CCCCCC',
+    backgroundColor: COLORS.BACKGROUND_DISABLED,
   },
   buttonPressed: {
     opacity: 0.8,
   },
   buttonText: {
-    fontSize: 16,
+    fontSize: DIMENSIONS.FONT_SIZE_MEDIUM,
     fontWeight: '600',
-  },
-  textDefault: {
-    color: '#FFFFFF',
-  },
-  textSelected: {
-    color: '#FFFFFF',
-  },
-  textDisabled: {
-    color: '#888888',
   },
 });

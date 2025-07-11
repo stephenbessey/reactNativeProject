@@ -1,24 +1,24 @@
-import{ useState } from 'react';
-import { User, WorkoutPartner, WorkoutDay } from '../types';
-import { MOCK_COACHES, MOCK_TRAINEES, WORKOUT_DAYS } from '../constants/workoutData.ts';
+import { useState } from 'react';
+import { User, WorkoutPartner, WorkoutDay, UserType } from '../types';
+import { MOCK_COACHES, MOCK_TRAINEES, WORKOUT_DAYS } from '../constants/workoutData';
+import { createUserId } from '../utils/userHelpers';
 
 export const useWorkoutSetup = () => {
   const [user, setUser] = useState<User | null>(null);
   const [partners, setPartners] = useState<WorkoutPartner[]>([]);
   const [workoutDays, setWorkoutDays] = useState<WorkoutDay[]>(WORKOUT_DAYS);
 
-  const createUser = (username: string, type: 'coach' | 'trainee'): User => {
+  const createUser = (username: string, type: UserType): User => {
     return {
-      id: Date.now().toString(),
-      name: username,
-      type,
+      id: createUserId(),
       username,
+      type,
     };
   };
 
-  const initializePartners = (userType: 'coach' | 'trainee'): void => {
+  const initializePartners = (userType: UserType): void => {
     const availablePartners = userType === 'coach' ? MOCK_TRAINEES : MOCK_COACHES;
-    setPartners(availablePartners);
+    setPartners([...availablePartners]);
   };
 
   const togglePartnerSelection = (partnerId: string): void => {
@@ -49,6 +49,11 @@ export const useWorkoutSetup = () => {
     return workoutDays.filter(day => day.isSelected);
   };
 
+  const resetSelections = (): void => {
+    setPartners(partners.map(p => ({ ...p, isSelected: false })));
+    setWorkoutDays(WORKOUT_DAYS.map(d => ({ ...d, isSelected: false })));
+  };
+
   return {
     user,
     setUser,
@@ -60,5 +65,6 @@ export const useWorkoutSetup = () => {
     toggleDaySelection,
     getSelectedPartners,
     getSelectedDays,
+    resetSelections,
   };
 };

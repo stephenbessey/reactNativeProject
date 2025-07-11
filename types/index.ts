@@ -1,14 +1,15 @@
+import { USER_TYPES } from '../constants/userTypes';
+
 export interface User {
   id: string;
-  name: string;
-  type: 'coach' | 'trainee';
   username: string;
+  type: UserType;
 }
 
 export interface WorkoutPartner {
   id: string;
   name: string;
-  type: 'coach' | 'trainee';
+  type: UserType;
   isSelected: boolean;
 }
 
@@ -34,4 +35,13 @@ export interface DailyWorkout {
   isCompleted: boolean;
   completedAt?: Date;
   feedback?: string;
+}
+
+export type UserType = typeof USER_TYPES[keyof typeof USER_TYPES];
+
+export interface NavigationParams {
+  username: string;
+  userType: string;
+  selectedPartners?: string;
+  selectedDays?: string;
 }

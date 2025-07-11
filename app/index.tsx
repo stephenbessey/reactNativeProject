@@ -1,27 +1,34 @@
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, Alert } from 'react-native';
-import { router } from 'expo-router';
+import { View, Text, Alert } from 'react-native';
 import { ScreenContainer } from '../components/ScreenContainer';
 import { SelectionButton } from '../components/SelectionButton';
 import { FormInput } from '../components/FormInput';
+import { PageHeader } from '../components/sections/PageHeader';
 import { useWorkoutSetup } from '../hooks/useWorkoutSetup';
+import { useWorkoutNavigation } from '../hooks/useWorkoutNavigation';
+import { validateUsername, validateUserType } from '../utils/validation';
+import { getUserDescription } from '../utils/userHelpers';
+import { UserType, USER_TYPES } from '../constants/userTypes';
+import { commonStyles } from '../styles/commonStyles';
 
 export default function InitialScreen() {
   const [username, setUsername] = useState('');
-  const [selectedType, setSelectedType] = useState<'coach' | 'trainee' | null>(null);
+  const [selectedType, setSelectedType] = useState<UserType | null>(null);
+  
   const { createUser, setUser, initializePartners } = useWorkoutSetup();
+  const { navigateToPartnerSelect } = useWorkoutNavigation();
 
-  const handleTypeSelection = (type: 'coach' | 'trainee'): void => {
+  const handleTypeSelection = (type: UserType): void => {
     setSelectedType(type);
   };
 
-  const handleLogin = (): void => {
-    if (!username.trim()) {
+  const handleContinue = (): void => {
+    if (!validateUsername(username)) {
       Alert.alert('Error', 'Please enter your username');
       return;
     }
 
-    if (!selectedType) {
+    if (!validateUserType(selectedType)) {
       Alert.alert('Error', 'Please select your type');
       return;
     }
@@ -29,51 +36,24 @@ export default function InitialScreen() {
     const newUser = createUser(username.trim(), selectedType);
     setUser(newUser);
     initializePartners(selectedType);
-
-    router.push({
-      pathname: '/partner-select',
-      params: {
-        username: newUser.username,
-        userType: newUser.type
-      }
-    });
+    navigateToPartnerSelect(newUser.username, newUser.type);
   };
 
-  const getUserTypeDescription = (): string => {
-    if (!selectedType) return '';
-
-    return selectedType === 'coach'
-      ? 'Create workouts and track trainee progress'
-      : 'Follow workout plans and provide feedback';
-  };
+  const isFormValid = validateUsername(username) && validateUserType(selectedType);
 
   return (
     <ScreenContainer>
-      <View style={styles.header}>
-        <Text style={styles.title}>Workout Partner</Text>
-        <Text style={styles.subtitle}>Connect coaches with trainees for better fitness results</Text>
-      </View>
+      <PageHeader 
+        title="Workout Partner"
+        subtitle="Connect coaches with trainees for better fitness results"
+      />
 
-      <View style={styles.typeSelection}>
-        <Text style={styles.sectionTitle}>Select your role</Text>
-        <View style={styles.typeButtons}>
-          <SelectionButton
-            title="Coach"
-            isSelected={selectedType === 'coach'}
-            onPress={() => handleTypeSelection('coach')}
-          />
-          <SelectionButton
-            title="Trainee"
-            isSelected={selectedType === 'trainee'}
-            onPress={() => handleTypeSelection('trainee')}
-          />
-        </View>
-        {selectedType && (
-          <Text style={styles.typeDescription}>{getUserTypeDescription()}</Text>
-        )}
-      </View>
+      <RoleSelection 
+        selectedType={selectedType}
+        onTypeSelection={handleTypeSelection}
+      />
 
-      <View style={styles.form}>
+      <View style={commonStyles.section}>
         <FormInput
           label="Username"
           value={username}
@@ -83,61 +63,51 @@ export default function InitialScreen() {
         />
       </View>
 
-      <View style={styles.loginSection}>
+      <View style={commonStyles.actionContainer}>
         <SelectionButton
           title="Continue"
           variant="primary"
-          onPress={handleLogin}
-          disabled={!username.trim() || !selectedType}
+          onPress={handleContinue}
+          disabled={!isFormValid}
         />
       </View>
     </ScreenContainer>
   );
 }
 
-const styles = StyleSheet.create({
-  header: {
-    alignItems: 'center',
-    marginTop: 40,
-    marginBottom: 40,
-  },
-  title: {
-    fontSize: 28,
-    fontWeight: 'bold',
-    color: '#000000',
-    marginBottom: 8,
-  },
-  subtitle: {
-    fontSize: 16,
-    color: '#666666',
-    textAlign: 'center',
-  },
-  typeSelection: {
-    marginBottom: 30,
-  },
-  sectionTitle: {
-    fontSize: 18,
-    fontWeight: '600',
-    marginBottom: 16,
-    color: '#000000',
-  },
-  typeButtons: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    gap: 12,
-  },
-  typeDescription: {
-    fontSize: 14,
-    color: '#666666',
-    textAlign: 'center',
-    marginTop: 12,
-    fontStyle: 'italic',
-  },
-  form: {
-    marginBottom: 30,
-  },
-  loginSection: {
-    marginTop: 'auto',
-    marginBottom: 40,
-  },
-});
+// Role Selection Component
+interface RoleSelectionProps {
+  selectedType: UserType | null;
+  onTypeSelection: (type: UserType) => void;
+}
+
+const RoleSelection: React.FC<RoleSelectionProps> = ({ selectedType, onTypeSelection }) => {
+  return (
+    <View style={commonStyles.section}>
+      <Text style={commonStyles.sectionTitle}>Select your role</Text>
+      <View style={{ flexDirection: 'row', justifyContent: 'space-between', gap: 12 }}>
+        <SelectionButton
+          title="Coach"
+          isSelected={selectedType === USER_TYPES.COACH}
+          onPress={() => onTypeSelection(USER_TYPES.COACH)}
+        />
+        <SelectionButton
+          title="Trainee"
+          isSelected={selectedType === USER_TYPES.TRAINEE}
+          onPress={() => onTypeSelection(USER_TYPES.TRAINEE)}
+        />
+      </View>
+      {selectedType && (
+        <Text style={{ 
+          fontSize: 14, 
+          color: '#666666', 
+          textAlign: 'center', 
+          marginTop: 12, 
+          fontStyle: 'italic' 
+        }}>
+          {getUserDescription(selectedType)}
+        </Text>
+      )}
+    </View>
+  );
+};
