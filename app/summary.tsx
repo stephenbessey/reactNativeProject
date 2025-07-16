@@ -1,6 +1,6 @@
 import React from 'react';
 import { View, ScrollView } from 'react-native';
-import { useLocalSearchParams } from 'expo-router';
+import { useLocalSearchParams, router } from 'expo-router';
 import { ScreenContainer } from '../components/ScreenContainer';
 import { SelectionButton } from '../components/SelectionButton';
 import { SuccessHeader } from '../components/sections/SuccessHeader';
@@ -28,7 +28,22 @@ export default function SummaryScreen() {
   };
 
   const handleStartWorkout = (): void => {
-    console.log('Starting workout management with:', { username, userType, partners, days });
+    router.push({
+      pathname: '/workout-detail',
+      params: {
+        workoutName: `${username}'s Workout`,
+        partnerId: partners[0]?.name || '',
+        selectedDays: JSON.stringify(days),
+      },
+    });
+  };
+
+  const handleViewProgress = (): void => {
+    router.push('/progress');
+  };
+
+  const handleOpenSettings = (): void => {
+    router.push('/settings');
   };
 
   const handleStartOver = (): void => {
@@ -48,9 +63,17 @@ export default function SummaryScreen() {
 
       <View style={commonStyles.actionContainer}>
         <SelectionButton
-          title="Start Managing Workouts"
+          title="Start Workout"
           variant="primary"
           onPress={handleStartWorkout}
+        />
+        <SelectionButton
+          title="View Progress"
+          onPress={handleViewProgress}
+        />
+        <SelectionButton
+          title="Settings"
+          onPress={handleOpenSettings}
         />
         <SelectionButton
           title="Start Over"
