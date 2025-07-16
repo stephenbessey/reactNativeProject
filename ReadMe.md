@@ -1,6 +1,22 @@
 # Workout Partner App
 
-A React Native app built with Expo Router that connects coaches with trainees for workout management and progress tracking.
+A comprehensive React Native fitness application built with Expo Router that connects coaches with trainees for complete workout management, progress tracking, and form analysis. The app features intelligent motion detection, photo capture capabilities, and comprehensive data storage for a professional fitness experience.
+
+## Application Description
+
+Workout Partner is a full-featured fitness management platform designed to bridge the gap between fitness coaches and their trainees. The app provides a seamless workflow from initial user setup through comprehensive workout execution and progress tracking.
+
+**Key Features:**
+- **Role-based Setup**: Choose between Coach or Trainee profiles with customized experiences
+- **Partner Matching**: Connect with workout partners based on your role and preferences
+- **Intelligent Workout Builder**: Create detailed workouts with exercises, sets, reps, weights, and timing
+- **Motion-Based Rep Counting**: Automatic rep detection using device accelerometer
+- **Form Photo Capture**: Document exercise form and progress with integrated camera
+- **Progress Tracking**: Comprehensive workout history with visual progress charts
+- **Theme Management**: Dark/light mode support with persistent preferences
+- **Local Data Storage**: All workout data stored securely on device with AsyncStorage
+
+The app follows Material Design principles on Android and Human Interface Guidelines on iOS, providing a native feel across platforms while maintaining feature consistency.
 
 ## Wireframes
 
