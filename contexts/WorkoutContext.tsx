@@ -1,4 +1,3 @@
-// contexts/WorkoutContext.tsx
 import React, { createContext, useContext, useReducer, useEffect, ReactNode } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
@@ -208,7 +207,6 @@ export const WorkoutProvider: React.FC<WorkoutProviderProps> = ({ children }) =>
       const savedData = await AsyncStorage.getItem('workout_data');
       if (savedData) {
         const parsedData = JSON.parse(savedData);
-        // Convert date strings back to Date objects
         const workoutHistory = parsedData.workoutHistory?.map((workout: any) => ({
           ...workout,
           date: new Date(workout.date),
