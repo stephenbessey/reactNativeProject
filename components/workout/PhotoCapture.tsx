@@ -62,7 +62,6 @@ export const PhotoCapture: React.FC<PhotoCaptureProps> = ({
       });
 
       if (photo?.uri) {
-        // Save to device gallery
         await MediaLibrary.saveToLibraryAsync(photo.uri);
         onCapture(photo.uri);
       }
@@ -95,7 +94,6 @@ export const PhotoCapture: React.FC<PhotoCaptureProps> = ({
             <View style={styles.headerSpacer} />
           </View>
 
-          {/* Camera Controls */}
           <View style={styles.controls}>
             <View style={styles.controlsContainer}>
               {/* Flip Camera Button */}
@@ -106,7 +104,6 @@ export const PhotoCapture: React.FC<PhotoCaptureProps> = ({
                 <Ionicons name="camera-reverse" size={32} color="white" />
               </Pressable>
 
-              {/* Capture Button */}
               <Pressable 
                 style={[styles.captureButton, isCapturing && styles.capturingButton]}
                 onPress={handleCapture}
@@ -115,7 +112,6 @@ export const PhotoCapture: React.FC<PhotoCaptureProps> = ({
                 <View style={styles.captureButtonInner} />
               </Pressable>
 
-              {/* Gallery Button */}
               <Pressable 
                 style={styles.controlButton}
                 onPress={() => {
@@ -128,7 +124,6 @@ export const PhotoCapture: React.FC<PhotoCaptureProps> = ({
             </View>
           </View>
 
-          {/* Capture Instructions */}
           <View style={styles.instructions}>
             <View style={styles.instructionContainer}>
               <Text style={styles.instructionText}>
