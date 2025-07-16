@@ -98,7 +98,6 @@ export const ExerciseCard: React.FC<ExerciseCardProps> = ({
         </View>
       </Pressable>
 
-      {/* Progress Bar */}
       <View style={styles.progressContainer}>
         <View style={styles.progressBar}>
           <View 
@@ -120,15 +119,12 @@ export const ExerciseCard: React.FC<ExerciseCardProps> = ({
             </View>
           )}
 
-          {/* Exercise Image */}
           {exercise.imageUri && (
             <View style={styles.imageContainer}>
               <Text style={styles.sectionTitle}>Form Reference</Text>
               <Image source={{ uri: exercise.imageUri }} style={styles.exerciseImage} />
             </View>
           )}
-
-          {/* Action Buttons */}
           <View style={styles.actionButtons}>
             <Pressable 
               style={styles.actionButton}
@@ -148,7 +144,6 @@ export const ExerciseCard: React.FC<ExerciseCardProps> = ({
             </Pressable>
           </View>
 
-          {/* Set Tracker */}
           {isWorkoutActive && !exercise.isCompleted && (
             <SetTracker
               exercise={exercise}
@@ -157,7 +152,6 @@ export const ExerciseCard: React.FC<ExerciseCardProps> = ({
             />
           )}
 
-          {/* Completed Sets History */}
           {exercise.completedSets.length > 0 && (
             <View style={styles.historyContainer}>
               <Text style={styles.sectionTitle}>Completed Sets</Text>
@@ -175,7 +169,6 @@ export const ExerciseCard: React.FC<ExerciseCardProps> = ({
             </View>
           )}
 
-          {/* Exercise Notes */}
           {exercise.notes && (
             <View style={styles.notesContainer}>
               <Text style={styles.sectionTitle}>Notes</Text>
@@ -185,14 +178,12 @@ export const ExerciseCard: React.FC<ExerciseCardProps> = ({
         </View>
       )}
 
-      {/* Photo Capture Modal */}
       <PhotoCapture
         visible={isPhotoModalVisible}
         onClose={() => setIsPhotoModalVisible(false)}
         onCapture={handlePhotoCapture}
       />
 
-      {/* Rest Timer */}
       <RestTimer
         visible={isRestTimerActive}
         duration={exercise.restTime || 60}
@@ -200,7 +191,6 @@ export const ExerciseCard: React.FC<ExerciseCardProps> = ({
         onSkip={() => setIsRestTimerActive(false)}
       />
 
-      {/* Motion Detection */}
       <MotionDetector
         visible={isMotionDetectionActive}
         targetReps={exercise.reps}
