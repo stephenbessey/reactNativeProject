@@ -87,4 +87,259 @@ export const ExerciseCard: React.FC<ExerciseCardProps> = ({
         
         <View style={styles.statsContainer}>
           <Text style={styles.stats}>
-            {complet
+            {completedSets}/{exercise.sets} sets • {exercise.reps} reps
+            {exercise.weight && ` • ${exercise.weight}lbs`}
+          </Text>
+          <Ionicons 
+            name={isExpanded ? "chevron-up" : "chevron-down"} 
+            size={20} 
+            color={theme.colors.textTertiary} 
+          />
+        </View>
+      </Pressable>
+
+      {/* Progress Bar */}
+      <View style={styles.progressContainer}>
+        <View style={styles.progressBar}>
+          <View 
+            style={[
+              styles.progressFill, 
+              { width: `${progressPercentage}%` }
+            ]} 
+          />
+        </View>
+      </View>
+
+      {isExpanded && (
+        <View style={styles.expandedContent}>
+          {/* Exercise Description */}
+          {exercise.description && (
+            <View style={styles.descriptionContainer}>
+              <Text style={styles.sectionTitle}>Instructions</Text>
+              <Text style={styles.description}>{exercise.description}</Text>
+            </View>
+          )}
+
+          {/* Exercise Image */}
+          {exercise.imageUri && (
+            <View style={styles.imageContainer}>
+              <Text style={styles.sectionTitle}>Form Reference</Text>
+              <Image source={{ uri: exercise.imageUri }} style={styles.exerciseImage} />
+            </View>
+          )}
+
+          {/* Action Buttons */}
+          <View style={styles.actionButtons}>
+            <Pressable 
+              style={styles.actionButton}
+              onPress={() => setIsPhotoModalVisible(true)}
+            >
+              <Ionicons name="camera" size={20} color={theme.colors.primary} />
+              <Text style={styles.actionButtonText}>Photo</Text>
+            </Pressable>
+
+            <Pressable 
+              style={styles.actionButton}
+              onPress={() => setIsMotionDetectionActive(true)}
+              disabled={!isWorkoutActive || exercise.isCompleted}
+            >
+              <Ionicons name="fitness" size={20} color={theme.colors.primary} />
+              <Text style={styles.actionButtonText}>Auto Count</Text>
+            </Pressable>
+          </View>
+
+          {/* Set Tracker */}
+          {isWorkoutActive && !exercise.isCompleted && (
+            <SetTracker
+              exercise={exercise}
+              onCompleteSet={handleCompleteSet}
+              currentSetNumber={completedSets + 1}
+            />
+          )}
+
+          {/* Completed Sets History */}
+          {exercise.completedSets.length > 0 && (
+            <View style={styles.historyContainer}>
+              <Text style={styles.sectionTitle}>Completed Sets</Text>
+              {exercise.completedSets.map((set, index) => (
+                <View key={set.id} style={styles.setHistoryItem}>
+                  <Text style={styles.setNumber}>Set {index + 1}</Text>
+                  <Text style={styles.setDetails}>
+                    {set.reps} reps
+                    {set.weight && ` × ${set.weight}lbs`}
+                    {set.duration && ` × ${Math.round(set.duration / 60)}min`}
+                  </Text>
+                  <Ionicons name="checkmark" size={16} color={theme.colors.success} />
+                </View>
+              ))}
+            </View>
+          )}
+
+          {/* Exercise Notes */}
+          {exercise.notes && (
+            <View style={styles.notesContainer}>
+              <Text style={styles.sectionTitle}>Notes</Text>
+              <Text style={styles.notes}>{exercise.notes}</Text>
+            </View>
+          )}
+        </View>
+      )}
+
+      {/* Photo Capture Modal */}
+      <PhotoCapture
+        visible={isPhotoModalVisible}
+        onClose={() => setIsPhotoModalVisible(false)}
+        onCapture={handlePhotoCapture}
+      />
+
+      {/* Rest Timer */}
+      <RestTimer
+        visible={isRestTimerActive}
+        duration={exercise.restTime || 60}
+        onComplete={() => setIsRestTimerActive(false)}
+        onSkip={() => setIsRestTimerActive(false)}
+      />
+
+      {/* Motion Detection */}
+      <MotionDetector
+        visible={isMotionDetectionActive}
+        targetReps={exercise.reps}
+        onDetection={handleMotionDetection}
+        onClose={() => setIsMotionDetectionActive(false)}
+      />
+    </View>
+  );
+};
+
+const createStyles = (theme: any) => StyleSheet.create({
+  container: {
+    backgroundColor: theme.colors.surface,
+    borderRadius: theme.borderRadius.lg,
+    padding: theme.spacing.md,
+    marginBottom: theme.spacing.md,
+    ...theme.shadows.medium,
+  },
+  completedContainer: {
+    backgroundColor: theme.colors.success + '10',
+    borderWidth: 1,
+    borderColor: theme.colors.success + '30',
+  },
+  header: {
+    marginBottom: theme.spacing.sm,
+  },
+  titleContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: theme.spacing.xs,
+  },
+  title: {
+    fontSize: theme.typography.fontSizes.lg,
+    fontWeight: theme.typography.fontWeights.semibold,
+    color: theme.colors.text,
+    flex: 1,
+  },
+  statsContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  stats: {
+    fontSize: theme.typography.fontSizes.sm,
+    color: theme.colors.textSecondary,
+    fontWeight: theme.typography.fontWeights.medium,
+  },
+  progressContainer: {
+    marginBottom: theme.spacing.sm,
+  },
+  progressBar: {
+    height: 4,
+    backgroundColor: theme.colors.border,
+    borderRadius: theme.borderRadius.sm,
+    overflow: 'hidden',
+  },
+  progressFill: {
+    height: '100%',
+    backgroundColor: theme.colors.success,
+    borderRadius: theme.borderRadius.sm,
+  },
+  expandedContent: {
+    paddingTop: theme.spacing.md,
+    borderTopWidth: 1,
+    borderTopColor: theme.colors.border,
+  },
+  sectionTitle: {
+    fontSize: theme.typography.fontSizes.md,
+    fontWeight: theme.typography.fontWeights.semibold,
+    color: theme.colors.text,
+    marginBottom: theme.spacing.sm,
+  },
+  descriptionContainer: {
+    marginBottom: theme.spacing.md,
+  },
+  description: {
+    fontSize: theme.typography.fontSizes.sm,
+    color: theme.colors.textSecondary,
+    lineHeight: 20,
+  },
+  imageContainer: {
+    marginBottom: theme.spacing.md,
+  },
+  exerciseImage: {
+    width: '100%',
+    height: 200,
+    borderRadius: theme.borderRadius.md,
+    backgroundColor: theme.colors.border,
+  },
+  actionButtons: {
+    flexDirection: 'row',
+    gap: theme.spacing.md,
+    marginBottom: theme.spacing.md,
+  },
+  actionButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: theme.spacing.sm,
+    borderRadius: theme.borderRadius.md,
+    backgroundColor: theme.colors.primary + '10',
+    gap: theme.spacing.xs,
+  },
+  actionButtonText: {
+    fontSize: theme.typography.fontSizes.sm,
+    color: theme.colors.primary,
+    fontWeight: theme.typography.fontWeights.medium,
+  },
+  historyContainer: {
+    marginBottom: theme.spacing.md,
+  },
+  setHistoryItem: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingVertical: theme.spacing.xs,
+    paddingHorizontal: theme.spacing.sm,
+    backgroundColor: theme.colors.background,
+    borderRadius: theme.borderRadius.sm,
+    marginBottom: theme.spacing.xs,
+  },
+  setNumber: {
+    fontSize: theme.typography.fontSizes.sm,
+    fontWeight: theme.typography.fontWeights.medium,
+    color: theme.colors.textSecondary,
+    minWidth: 50,
+  },
+  setDetails: {
+    fontSize: theme.typography.fontSizes.sm,
+    color: theme.colors.text,
+    flex: 1,
+  },
+  notesContainer: {
+    marginTop: theme.spacing.sm,
+  },
+  notes: {
+    fontSize: theme.typography.fontSizes.sm,
+    color: theme.colors.textSecondary,
+    fontStyle: 'italic',
+    lineHeight: 18,
+  },
+});
