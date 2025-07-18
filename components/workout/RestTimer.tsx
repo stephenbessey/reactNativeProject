@@ -2,6 +2,8 @@ import React, { useState, useEffect, useRef } from 'react';
 import { View, Text, Modal, StyleSheet, Pressable, Animated } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '../../contexts/ThemeContext';
+import { REST_TIMER } from '../../constants/workoutConstants';
+import { formatDuration } from '../../utils/formatters';
 
 interface RestTimerProps {
   visible: boolean;
@@ -23,90 +25,113 @@ export const RestTimer: React.FC<RestTimerProps> = ({
   const { theme } = useTheme();
   const styles = createStyles(theme);
 
-  const scaleAnim = useRef(new Animated.Value(1)).current;
-  const progressAnim = useRef(new Animated.Value(0)).current;
+  const scaleAnimation = useRef(new Animated.Value(1)).current;
+  const progressAnimation = useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
     if (visible) {
-      setTimeRemaining(duration);
-      setIsRunning(true);
-      progressAnim.setValue(0);
+      initializeTimer();
     } else {
-      setIsRunning(false);
-      if (intervalRef.current) {
-        clearInterval(intervalRef.current);
-      }
+      stopTimer();
     }
   }, [visible, duration]);
 
   useEffect(() => {
     if (isRunning && timeRemaining > 0) {
-      intervalRef.current = setInterval(() => {
-        setTimeRemaining(prev => {
-          const newTime = prev - 1;
-          
-          // Update progress animation
-          const progress = 1 - (newTime / duration);
-          Animated.timing(progressAnim, {
-            toValue: progress,
-            duration: 100,
-            useNativeDriver: false,
-          }).start();
-
-          // Pulse animation for last 10 seconds
-          if (newTime <= 10 && newTime > 0) {
-            Animated.sequence([
-              Animated.timing(scaleAnim, {
-                toValue: 1.1,
-                duration: 300,
-                useNativeDriver: true,
-              }),
-              Animated.timing(scaleAnim, {
-                toValue: 1,
-                duration: 300,
-                useNativeDriver: true,
-              }),
-            ]).start();
-          }
-
-          if (newTime <= 0) {
-            setIsRunning(false);
-            onComplete();
-            return 0;
-          }
-
-          return newTime;
-        });
-      }, 1000);
-    } else if (intervalRef.current) {
-      clearInterval(intervalRef.current);
+      startCountdownTimer();
+    } else {
+      clearTimerInterval();
     }
 
-    return () => {
-      if (intervalRef.current) {
-        clearInterval(intervalRef.current);
-      }
-    };
+    return clearTimerInterval;
   }, [isRunning, timeRemaining, duration, onComplete]);
+
+  const initializeTimer = (): void => {
+    setTimeRemaining(duration);
+    setIsRunning(true);
+    progressAnimation.setValue(0);
+  };
+
+  const stopTimer = (): void => {
+    setIsRunning(false);
+    clearTimerInterval();
+  };
+
+  const startCountdownTimer = (): void => {
+    intervalRef.current = setInterval(() => {
+      setTimeRemaining(previousTime => {
+        const newTime = previousTime - 1;
+        
+        updateProgressAnimation(newTime);
+        handleTimeThresholds(newTime);
+
+        if (newTime <= 0) {
+          setIsRunning(false);
+          onComplete();
+          return 0;
+        }
+
+        return newTime;
+      });
+    }, 1000);
+  };
+
+  const clearTimerInterval = (): void => {
+    if (intervalRef.current) {
+      clearInterval(intervalRef.current);
+      intervalRef.current = null;
+    }
+  };
+
+  const updateProgressAnimation = (remainingTime: number): void => {
+    const progress = 1 - (remainingTime / duration);
+    Animated.timing(progressAnimation, {
+      toValue: progress,
+      duration: 100,
+      useNativeDriver: false,
+    }).start();
+  };
+
+  const handleTimeThresholds = (remainingTime: number): void => {
+    if (remainingTime <= REST_TIMER.CRITICAL_THRESHOLD_SECONDS && remainingTime > 0) {
+      triggerPulseAnimation();
+    }
+  };
+
+  const triggerPulseAnimation = (): void => {
+    Animated.sequence([
+      Animated.timing(scaleAnimation, {
+        toValue: 1.1,
+        duration: REST_TIMER.PULSE_ANIMATION_DURATION_MS,
+        useNativeDriver: true,
+      }),
+      Animated.timing(scaleAnimation, {
+        toValue: 1,
+        duration: REST_TIMER.PULSE_ANIMATION_DURATION_MS,
+        useNativeDriver: true,
+      }),
+    ]).start();
+  };
 
   const handlePauseResume = (): void => {
     setIsRunning(!isRunning);
   };
 
-  const handleAddTime = (seconds: number): void => {
-    setTimeRemaining(prev => prev + seconds);
+  const handleAddTime = (additionalSeconds: number): void => {
+    setTimeRemaining(currentTime => currentTime + additionalSeconds);
   };
 
-  const formatTime = (seconds: number): string => {
-    const minutes = Math.floor(seconds / 60);
-    const remainingSeconds = seconds % 60;
-    return `${minutes}:${remainingSeconds.toString().padStart(2, '0')}`;
-  };
-
-  const getTimerColor = (): string => {
-    if (timeRemaining <= 10) return theme.colors.error;
-    if (timeRemaining <= 30) return theme.colors.warning;
+  const getTimerDisplayColor = (): string => {
+    if (timeRemaining <= REST_TIMER.CRITICAL_THRESHOLD_SECONDS) return theme.colors.error;
+    if (timeRemaining <= REST_TIMER.WARNING_THRESHOLD_SECONDS) return theme.colors.warning;
     return theme.colors.primary;
+  };
+
+  const getStatusMessage = (): string => {
+    if (timeRemaining <= 0) return 'Rest complete! Ready for next set';
+    if (!isRunning) return 'Timer paused';
+    if (timeRemaining <= REST_TIMER.CRITICAL_THRESHOLD_SECONDS) return 'Almost done!';
+    return 'Rest time';
   };
 
   if (!visible) return null;
@@ -115,103 +140,164 @@ export const RestTimer: React.FC<RestTimerProps> = ({
     <Modal visible={visible} animationType="fade" transparent>
       <View style={styles.overlay}>
         <View style={styles.container}>
-          {/* Header */}
-          <View style={styles.header}>
-            <Text style={styles.title}>Rest Timer</Text>
-            <Pressable onPress={onSkip} style={styles.closeButton}>
-              <Ionicons name="close" size={24} color={theme.colors.text} />
-            </Pressable>
-          </View>
+          <RestTimerHeader onClose={onSkip} />
 
-          <View style={styles.timerContainer}>
-            <View style={styles.progressRing}>
-              <Animated.View 
-                style={[
-                  styles.progressFill,
-                  {
-                    width: progressAnim.interpolate({
-                      inputRange: [0, 1],
-                      outputRange: ['0%', '100%'],
-                    }),
-                  },
-                ]} 
-              />
-            </View>
-            
-            <Animated.View 
-              style={[
-                styles.timerDisplay,
-                { transform: [{ scale: scaleAnim }] }
-              ]}
-            >
-              <Text style={[styles.timerText, { color: getTimerColor() }]}>
-                {formatTime(timeRemaining)}
-              </Text>
-              <Text style={styles.timerSubtext}>
-                {timeRemaining <= 10 ? 'Almost done!' : 'Rest time'}
-              </Text>
-            </Animated.View>
-          </View>
+          <RestTimerDisplay
+            timeRemaining={timeRemaining}
+            scaleAnimation={scaleAnimation}
+            progressAnimation={progressAnimation}
+            timerColor={getTimerDisplayColor()}
+            statusMessage={getStatusMessage()}
+          />
 
-          <View style={styles.quickActions}>
-            <Pressable 
-              style={styles.quickButton}
-              onPress={() => handleAddTime(15)}
-            >
-              <Text style={styles.quickButtonText}>+15s</Text>
-            </Pressable>
-            <Pressable 
-              style={styles.quickButton}
-              onPress={() => handleAddTime(30)}
-            >
-              <Text style={styles.quickButtonText}>+30s</Text>
-            </Pressable>
-            <Pressable 
-              style={styles.quickButton}
-              onPress={() => handleAddTime(60)}
-            >
-              <Text style={styles.quickButtonText}>+1m</Text>
-            </Pressable>
-          </View>
+          <QuickTimeControls onAddTime={handleAddTime} />
 
-          <View style={styles.controls}>
-            <Pressable 
-              style={[styles.controlButton, styles.pauseButton]}
-              onPress={handlePauseResume}
-            >
-              <Ionicons 
-                name={isRunning ? "pause" : "play"} 
-                size={24} 
-                color="white" 
-              />
-              <Text style={styles.controlButtonText}>
-                {isRunning ? 'Pause' : 'Resume'}
-              </Text>
-            </Pressable>
-
-            <Pressable 
-              style={[styles.controlButton, styles.skipButton]}
-              onPress={onSkip}
-            >
-              <Ionicons name="play-forward" size={24} color="white" />
-              <Text style={styles.controlButtonText}>Skip Rest</Text>
-            </Pressable>
-          </View>
-
-          <View style={styles.statusContainer}>
-            {timeRemaining <= 0 && (
-              <Text style={styles.statusText}>Rest complete! Ready for next set</Text>
-            )}
-            {timeRemaining > 0 && !isRunning && (
-              <Text style={styles.statusText}>Timer paused</Text>
-            )}
-          </View>
+          <RestTimerControls
+            isRunning={isRunning}
+            onPauseResume={handlePauseResume}
+            onSkip={onSkip}
+          />
         </View>
       </View>
     </Modal>
   );
 };
 
+// Sub-components for better organization
+interface RestTimerHeaderProps {
+  onClose: () => void;
+}
+
+const RestTimerHeader: React.FC<RestTimerHeaderProps> = ({ onClose }) => {
+  const { theme } = useTheme();
+  const styles = createHeaderStyles(theme);
+
+  return (
+    <View style={styles.header}>
+      <Text style={styles.title}>Rest Timer</Text>
+      <Pressable onPress={onClose} style={styles.closeButton}>
+        <Ionicons name="close" size={24} color={theme.colors.text} />
+      </Pressable>
+    </View>
+  );
+};
+
+interface RestTimerDisplayProps {
+  timeRemaining: number;
+  scaleAnimation: Animated.Value;
+  progressAnimation: Animated.Value;
+  timerColor: string;
+  statusMessage: string;
+}
+
+const RestTimerDisplay: React.FC<RestTimerDisplayProps> = ({
+  timeRemaining,
+  scaleAnimation,
+  progressAnimation,
+  timerColor,
+  statusMessage
+}) => {
+  const { theme } = useTheme();
+  const styles = createDisplayStyles(theme);
+
+  return (
+    <View style={styles.timerContainer}>
+      <View style={styles.progressRing}>
+        <Animated.View 
+          style={[
+            styles.progressFill,
+            {
+              width: progressAnimation.interpolate({
+                inputRange: [0, 1],
+                outputRange: ['0%', '100%'],
+              }),
+            },
+          ]} 
+        />
+      </View>
+      
+      <Animated.View 
+        style={[
+          styles.timerDisplay,
+          { transform: [{ scale: scaleAnimation }] }
+        ]}
+      >
+        <Text style={[styles.timerText, { color: timerColor }]}>
+          {formatDuration(timeRemaining)}
+        </Text>
+        <Text style={styles.timerSubtext}>
+          {statusMessage}
+        </Text>
+      </Animated.View>
+    </View>
+  );
+};
+
+interface QuickTimeControlsProps {
+  onAddTime: (seconds: number) => void;
+}
+
+const QuickTimeControls: React.FC<QuickTimeControlsProps> = ({ onAddTime }) => {
+  const { theme } = useTheme();
+  const styles = createQuickControlsStyles(theme);
+
+  return (
+    <View style={styles.quickActions}>
+      {REST_TIMER.QUICK_ADD_OPTIONS_SECONDS.map((seconds) => (
+        <Pressable 
+          key={seconds}
+          style={styles.quickButton}
+          onPress={() => onAddTime(seconds)}
+        >
+          <Text style={styles.quickButtonText}>+{seconds}s</Text>
+        </Pressable>
+      ))}
+    </View>
+  );
+};
+
+interface RestTimerControlsProps {
+  isRunning: boolean;
+  onPauseResume: () => void;
+  onSkip: () => void;
+}
+
+const RestTimerControls: React.FC<RestTimerControlsProps> = ({
+  isRunning,
+  onPauseResume,
+  onSkip
+}) => {
+  const { theme } = useTheme();
+  const styles = createControlsStyles(theme);
+
+  return (
+    <View style={styles.controls}>
+      <Pressable 
+        style={[styles.controlButton, styles.pauseButton]}
+        onPress={onPauseResume}
+      >
+        <Ionicons 
+          name={isRunning ? "pause" : "play"} 
+          size={24} 
+          color="white" 
+        />
+        <Text style={styles.controlButtonText}>
+          {isRunning ? 'Pause' : 'Resume'}
+        </Text>
+      </Pressable>
+
+      <Pressable 
+        style={[styles.controlButton, styles.skipButton]}
+        onPress={onSkip}
+      >
+        <Ionicons name="play-forward" size={24} color="white" />
+        <Text style={styles.controlButtonText}>Skip Rest</Text>
+      </Pressable>
+    </View>
+  );
+};
+
+// Styles
 const createStyles = (theme: any) => StyleSheet.create({
   overlay: {
     flex: 1,
@@ -228,6 +314,9 @@ const createStyles = (theme: any) => StyleSheet.create({
     maxWidth: 350,
     ...theme.shadows.large,
   },
+});
+
+const createHeaderStyles = (theme: any) => StyleSheet.create({
   header: {
     flexDirection: 'row',
     justifyContent: 'space-between',
@@ -247,10 +336,12 @@ const createStyles = (theme: any) => StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
   },
+});
+
+const createDisplayStyles = (theme: any) => StyleSheet.create({
   timerContainer: {
     alignItems: 'center',
     marginBottom: theme.spacing.xl,
-    position: 'relative',
   },
   progressRing: {
     width: 200,
@@ -278,6 +369,9 @@ const createStyles = (theme: any) => StyleSheet.create({
     color: theme.colors.textSecondary,
     fontWeight: theme.typography.fontWeights.medium,
   },
+});
+
+const createQuickControlsStyles = (theme: any) => StyleSheet.create({
   quickActions: {
     flexDirection: 'row',
     justifyContent: 'space-around',
@@ -296,10 +390,12 @@ const createStyles = (theme: any) => StyleSheet.create({
     color: theme.colors.text,
     fontWeight: theme.typography.fontWeights.medium,
   },
+});
+
+const createControlsStyles = (theme: any) => StyleSheet.create({
   controls: {
     flexDirection: 'row',
     gap: theme.spacing.md,
-    marginBottom: theme.spacing.md,
   },
   controlButton: {
     flex: 1,
@@ -320,15 +416,5 @@ const createStyles = (theme: any) => StyleSheet.create({
     color: 'white',
     fontSize: theme.typography.fontSizes.md,
     fontWeight: theme.typography.fontWeights.semibold,
-  },
-  statusContainer: {
-    alignItems: 'center',
-    minHeight: 24,
-  },
-  statusText: {
-    fontSize: theme.typography.fontSizes.sm,
-    color: theme.colors.textSecondary,
-    textAlign: 'center',
-    fontStyle: 'italic',
   },
 });

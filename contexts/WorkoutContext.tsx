@@ -1,5 +1,7 @@
 import React, { createContext, useContext, useReducer, useEffect, ReactNode } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { handleWorkoutError, WorkoutErrorCode } from '../utils/errorHandling';
+import { validateSetCompletion, validateWorkoutCanStart } from '../utils/workoutValidation';
 
 export interface Exercise {
   id: string;
@@ -62,14 +64,19 @@ type WorkoutAction =
   | { type: 'ADD_WORKOUT_TO_HISTORY'; payload: Workout }
   | { type: 'LOAD_WORKOUT_DATA'; payload: Partial<WorkoutState> }
   | { type: 'ADD_TEMPLATE'; payload: WorkoutTemplate }
-  | { type: 'UPDATE_WORKOUT_NOTES'; payload: string };
+  | { type: 'UPDATE_WORKOUT_NOTES'; payload: string }
+  | { type: 'CLEAR_CURRENT_WORKOUT' };
 
-const initialState: WorkoutState = {
+const INITIAL_WORKOUT_STATE: WorkoutState = {
   currentWorkout: null,
   workoutHistory: [],
   workoutTemplates: [],
   isWorkoutActive: false,
 };
+
+const STORAGE_KEYS = {
+  WORKOUT_DATA: 'workout_data',
+} as const;
 
 const workoutReducer = (state: WorkoutState, action: WorkoutAction): WorkoutState => {
   switch (action.type) {
@@ -82,11 +89,7 @@ const workoutReducer = (state: WorkoutState, action: WorkoutAction): WorkoutStat
 
     case 'END_WORKOUT':
       if (state.currentWorkout) {
-        const completedWorkout = {
-          ...state.currentWorkout,
-          isCompleted: true,
-          endTime: new Date(),
-        };
+        const completedWorkout = createCompletedWorkout(state.currentWorkout);
         return {
           ...state,
           currentWorkout: null,
@@ -96,16 +99,23 @@ const workoutReducer = (state: WorkoutState, action: WorkoutAction): WorkoutStat
       }
       return state;
 
+    case 'CLEAR_CURRENT_WORKOUT':
+      return {
+        ...state,
+        currentWorkout: null,
+        isWorkoutActive: false,
+      };
+
     case 'UPDATE_EXERCISE':
       if (!state.currentWorkout) return state;
       return {
         ...state,
         currentWorkout: {
           ...state.currentWorkout,
-          exercises: state.currentWorkout.exercises.map(exercise =>
-            exercise.id === action.payload.exerciseId
-              ? { ...exercise, ...action.payload.updates }
-              : exercise
+          exercises: updateExerciseInList(
+            state.currentWorkout.exercises,
+            action.payload.exerciseId,
+            action.payload.updates
           ),
         },
       };
@@ -116,14 +126,10 @@ const workoutReducer = (state: WorkoutState, action: WorkoutAction): WorkoutStat
         ...state,
         currentWorkout: {
           ...state.currentWorkout,
-          exercises: state.currentWorkout.exercises.map(exercise =>
-            exercise.id === action.payload.exerciseId
-              ? {
-                  ...exercise,
-                  completedSets: [...exercise.completedSets, action.payload.set],
-                  isCompleted: exercise.completedSets.length + 1 >= exercise.sets,
-                }
-              : exercise
+          exercises: completeSetForExercise(
+            state.currentWorkout.exercises,
+            action.payload.exerciseId,
+            action.payload.set
           ),
         },
       };
@@ -161,10 +167,51 @@ const workoutReducer = (state: WorkoutState, action: WorkoutAction): WorkoutStat
   }
 };
 
+// Helper functions for reducer
+const createCompletedWorkout = (workout: Workout): Workout => {
+  return {
+    ...workout,
+    isCompleted: true,
+    endTime: new Date(),
+  };
+};
+
+const updateExerciseInList = (
+  exercises: Exercise[],
+  exerciseId: string,
+  updates: Partial<Exercise>
+): Exercise[] => {
+  return exercises.map(exercise =>
+    exercise.id === exerciseId
+      ? { ...exercise, ...updates }
+      : exercise
+  );
+};
+
+const completeSetForExercise = (
+  exercises: Exercise[],
+  exerciseId: string,
+  newSet: ExerciseSet
+): Exercise[] => {
+  return exercises.map(exercise => {
+    if (exercise.id !== exerciseId) return exercise;
+
+    const updatedCompletedSets = [...exercise.completedSets, newSet];
+    const isExerciseCompleted = updatedCompletedSets.length >= exercise.sets;
+
+    return {
+      ...exercise,
+      completedSets: updatedCompletedSets,
+      isCompleted: isExerciseCompleted,
+    };
+  });
+};
+
 interface WorkoutContextType {
   state: WorkoutState;
   startWorkout: (workout: Workout) => void;
   endWorkout: () => void;
+  clearCurrentWorkout: () => void;
   updateExercise: (exerciseId: string, updates: Partial<Exercise>) => void;
   completeSet: (exerciseId: string, set: ExerciseSet) => void;
   addTemplate: (template: WorkoutTemplate) => void;
@@ -180,61 +227,118 @@ interface WorkoutProviderProps {
 }
 
 export const WorkoutProvider: React.FC<WorkoutProviderProps> = ({ children }) => {
-  const [state, dispatch] = useReducer(workoutReducer, initialState);
+  const [state, dispatch] = useReducer(workoutReducer, INITIAL_WORKOUT_STATE);
 
   useEffect(() => {
-    loadWorkoutData();
+    initializeWorkoutData();
   }, []);
 
   useEffect(() => {
-    saveWorkoutData();
+    saveWorkoutDataToStorage();
   }, [state.workoutHistory, state.workoutTemplates]);
+
+  const initializeWorkoutData = async (): Promise<void> => {
+    try {
+      await loadWorkoutData();
+    } catch (error) {
+      handleWorkoutError(
+        error instanceof Error ? error : new Error('Failed to initialize workout data'),
+        { title: 'Initialization Error' }
+      );
+    }
+  };
+
+  const saveWorkoutDataToStorage = async (): Promise<void> => {
+    try {
+      await saveWorkoutData();
+    } catch (error) {
+      handleWorkoutError(
+        error instanceof Error ? error : new Error('Failed to save workout data'),
+        { title: 'Save Error', showUserAlert: false }
+      );
+    }
+  };
 
   const saveWorkoutData = async (): Promise<void> => {
     try {
       const dataToSave = {
         workoutHistory: state.workoutHistory,
         workoutTemplates: state.workoutTemplates,
+        lastSaved: new Date().toISOString(),
       };
-      await AsyncStorage.setItem('workout_data', JSON.stringify(dataToSave));
+      
+      await AsyncStorage.setItem(
+        STORAGE_KEYS.WORKOUT_DATA, 
+        JSON.stringify(dataToSave)
+      );
     } catch (error) {
-      console.warn('Failed to save workout data:', error);
+      throw new Error(`Failed to save workout data: ${error}`);
     }
   };
 
   const loadWorkoutData = async (): Promise<void> => {
     try {
-      const savedData = await AsyncStorage.getItem('workout_data');
-      if (savedData) {
-        const parsedData = JSON.parse(savedData);
-        const workoutHistory = parsedData.workoutHistory?.map((workout: any) => ({
-          ...workout,
-          date: new Date(workout.date),
-          startTime: workout.startTime ? new Date(workout.startTime) : undefined,
-          endTime: workout.endTime ? new Date(workout.endTime) : undefined,
-        })) || [];
-
-        const workoutTemplates = parsedData.workoutTemplates?.map((template: any) => ({
-          ...template,
-          createdAt: new Date(template.createdAt),
-        })) || [];
-
-        dispatch({
-          type: 'LOAD_WORKOUT_DATA',
-          payload: { workoutHistory, workoutTemplates },
-        });
+      const savedData = await AsyncStorage.getItem(STORAGE_KEYS.WORKOUT_DATA);
+      
+      if (!savedData) {
+        return; // No saved data, use initial state
       }
+
+      const parsedData = JSON.parse(savedData);
+      const workoutHistory = deserializeWorkoutHistory(parsedData.workoutHistory || []);
+      const workoutTemplates = deserializeWorkoutTemplates(parsedData.workoutTemplates || []);
+
+      dispatch({
+        type: 'LOAD_WORKOUT_DATA',
+        payload: { workoutHistory, workoutTemplates },
+      });
     } catch (error) {
-      console.warn('Failed to load workout data:', error);
+      throw new Error(`Failed to load workout data: ${error}`);
     }
   };
 
+  const deserializeWorkoutHistory = (workoutData: any[]): Workout[] => {
+    return workoutData.map((workout: any) => ({
+      ...workout,
+      date: new Date(workout.date),
+      startTime: workout.startTime ? new Date(workout.startTime) : undefined,
+      endTime: workout.endTime ? new Date(workout.endTime) : undefined,
+      exercises: workout.exercises?.map((exercise: any) => ({
+        ...exercise,
+        completedSets: exercise.completedSets?.map((set: any) => ({
+          ...set,
+          timestamp: new Date(set.timestamp),
+        })) || [],
+      })) || [],
+    }));
+  };
+
+  const deserializeWorkoutTemplates = (templateData: any[]): WorkoutTemplate[] => {
+    return templateData.map((template: any) => ({
+      ...template,
+      createdAt: new Date(template.createdAt),
+    }));
+  };
+
   const startWorkout = (workout: Workout): void => {
-    dispatch({ type: 'START_WORKOUT', payload: workout });
+    try {
+      validateWorkoutCanStart(workout.exercises);
+      dispatch({ type: 'START_WORKOUT', payload: workout });
+    } catch (error) {
+      handleWorkoutError(
+        error instanceof Error ? error : new Error('Failed to start workout'),
+        { title: 'Workout Start Error' }
+      );
+      throw error;
+    }
   };
 
   const endWorkout = (): void => {
     dispatch({ type: 'END_WORKOUT' });
+  };
+
+  const clearCurrentWorkout = (): void => {
+    dispatch({ type: 'CLEAR_CURRENT_WORKOUT' });
   };
 
   const updateExercise = (exerciseId: string, updates: Partial<Exercise>): void => {
@@ -242,7 +346,16 @@ export const WorkoutProvider: React.FC<WorkoutProviderProps> = ({ children }) =>
   };
 
   const completeSet = (exerciseId: string, set: ExerciseSet): void => {
-    dispatch({ type: 'COMPLETE_SET', payload: { exerciseId, set } });
+    try {
+      validateSetCompletion(set.reps);
+      dispatch({ type: 'COMPLETE_SET', payload: { exerciseId, set } });
+    } catch (error) {
+      handleWorkoutError(
+        error instanceof Error ? error : new Error('Failed to complete set'),
+        { title: 'Set Completion Error' }
+      );
+      throw error;
+    }
   };
 
   const addTemplate = (template: WorkoutTemplate): void => {
@@ -253,10 +366,11 @@ export const WorkoutProvider: React.FC<WorkoutProviderProps> = ({ children }) =>
     dispatch({ type: 'UPDATE_WORKOUT_NOTES', payload: notes });
   };
 
-  const value: WorkoutContextType = {
+  const contextValue: WorkoutContextType = {
     state,
     startWorkout,
     endWorkout,
+    clearCurrentWorkout,
     updateExercise,
     completeSet,
     addTemplate,
@@ -266,7 +380,7 @@ export const WorkoutProvider: React.FC<WorkoutProviderProps> = ({ children }) =>
   };
 
   return (
-    <WorkoutContext.Provider value={value}>
+    <WorkoutContext.Provider value={contextValue}>
       {children}
     </WorkoutContext.Provider>
   );
