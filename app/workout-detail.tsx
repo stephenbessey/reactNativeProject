@@ -9,7 +9,7 @@ import { AddExerciseModal } from '../components/workout/AddExerciseModal';
 import { WorkoutTimer } from '../components/workout/WorkoutTimer';
 import { useWorkout, Workout, Exercise } from '../contexts/WorkoutContext';
 import { useTheme } from '../contexts/ThemeContext';
-import { createWorkoutId, createExerciseId } from '../utils/idHelpers';
+import { createWorkoutId, createExerciseId } from '../factories';
 
 export default function WorkoutDetailScreen() {
   const { workoutName, partnerId, selectedDays } = useLocalSearchParams<Record<string, string>>();

@@ -6,8 +6,8 @@ import { FormInput } from '../components/FormInput';
 import { PageHeader } from '../components/sections/PageHeader';
 import { useWorkoutSetup } from '../hooks/useWorkoutSetup';
 import { useWorkoutNavigation } from '../hooks/useWorkoutNavigation';
-import { validateUsername, validateUserType } from '../utils/validation';
-import { getUserDescription } from '../utils/userHelpers';
+import { validateUsername, validateUserType } from '../lib/validation';
+import { getUserDescription } from '../factories';
 import { UserType, USER_TYPES } from '../constants/userTypes';
 import { commonStyles } from '../styles/commonStyles';
 

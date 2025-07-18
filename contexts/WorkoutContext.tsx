@@ -1,7 +1,7 @@
 import React, { createContext, useContext, useReducer, useEffect, ReactNode } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { handleWorkoutError, WorkoutErrorCode } from '../utils/errorHandling';
-import { validateSetCompletion, validateWorkoutCanStart } from '../utils/workoutValidation';
+import { handleWorkoutError, WorkoutErrorCode } from '../services/error';
+import { validateSetCompletion, validateWorkoutCanStart } from '../lib/validation';
 
 export interface Exercise {
   id: string;

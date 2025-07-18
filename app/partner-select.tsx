@@ -6,8 +6,8 @@ import { SelectionButton } from '../components/SelectionButton';
 import { PageHeader } from '../components/sections/PageHeader';
 import { useWorkoutSetup } from '../hooks/useWorkoutSetup';
 import { useWorkoutNavigation } from '../hooks/useWorkoutNavigation';
-import { validateSelections } from '../utils/validation';
-import { getPartnerLabel } from '../utils/userHelpers';
+import { validateSelections } from '../lib/validation';
+import { getPartnerLabel } from '../factories';
 import { UserType } from '../types';
 import { commonStyles } from '../styles/commonStyles';
 

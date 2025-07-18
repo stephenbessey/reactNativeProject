@@ -18,19 +18,50 @@
     "ios": {
       "supportsTablet": true,
       "icon": "./assets/icon.png",
-      "bundleIdentifier": "com.anonymous.workoutpartnerapp"
+      "bundleIdentifier": "com.workoutpartner.app",
+      "infoPlist": {
+        "NSCameraUsageDescription": "This app uses the camera to capture exercise form photos for progress tracking.",
+        "NSPhotoLibraryUsageDescription": "This app needs access to your photo library to save workout progress photos.",
+        "NSMotionUsageDescription": "This app uses motion sensors to automatically count exercise repetitions."
+      }
     },
     "android": {
       "icon": "./assets/icon.png",
-      "package": "com.anonymous.workoutpartnerapp"
+      "package": "com.workoutpartner.app",
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/adaptive-icon.png",
+        "backgroundColor": "#ffffff"
+      },
+      "permissions": [
+        "CAMERA",
+        "READ_EXTERNAL_STORAGE",
+        "WRITE_EXTERNAL_STORAGE",
+        "VIBRATE"
+      ]
     },
     "web": {
       "favicon": "./assets/favicon.png",
       "bundler": "metro"
+    },
+    "plugins": [
+      "expo-router",
+      "expo-font",
+      [
+        "expo-camera",
+        {
+          "cameraPermission": "Allow Workout Partner to access your camera to capture exercise form photos."
+        }
+      ],
+      [
+        "expo-media-library",
+        {
+          "photosPermission": "Allow Workout Partner to access your photos to save workout progress images.",
+          "savePhotosPermission": "Allow Workout Partner to save workout photos to your library."
+        }
+      ]
+    ],
+    "experiments": {
+      "typedRoutes": false
     }
-  },
-  "plugins": [
-    "expo-router",
-    "expo-font"
-  ]
+  }
 }

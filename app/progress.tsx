@@ -7,7 +7,7 @@ import { SelectionButton } from '../components/SelectionButton';
 import { PageHeader } from '../components/sections/PageHeader';
 import { useTheme } from '../contexts/ThemeContext';
 import { useWorkout } from '../contexts/WorkoutContext';
-import { calculateWorkoutAnalytics, formatDate, formatWorkoutDuration } from '../utils/analytics';
+import { calculateWorkoutAnalytics, formatDate, formatWorkoutDuration } from '../lib/analytics';
 
 const screenWidth = Dimensions.get('window').width;
 

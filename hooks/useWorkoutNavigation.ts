@@ -1,7 +1,7 @@
 import { router } from 'expo-router';
 import { UserType } from '../constants/userTypes';
 import { WorkoutPartner, WorkoutDay } from '../types';
-import { serializePartners, serializeDays } from '../utils/dataTransformers';
+import { serializePartners, serializeDays } from '../lib/transformers';
 
 export const useWorkoutNavigation = () => {
   const navigateToPartnerSelect = (username: string, userType: UserType): void => {

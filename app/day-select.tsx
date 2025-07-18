@@ -6,9 +6,9 @@ import { SelectionButton } from '../components/SelectionButton';
 import { PageHeader } from '../components/sections/PageHeader';
 import { useWorkoutSetup } from '../hooks/useWorkoutSetup';
 import { useWorkoutNavigation } from '../hooks/useWorkoutNavigation';
-import { validateSelections } from '../utils/validation';
-import { parseJsonSafely } from '../utils/dataTransformers';
-import { getActionText } from '../utils/userHelpers';
+import { validateSelections } from '../lib/validation';
+import { parseJsonSafely } from '../lib/transformers';
+import { getActionText } from '../factories';
 import { UserType, WorkoutPartner } from '../types';
 import { commonStyles } from '../styles/commonStyles';
 

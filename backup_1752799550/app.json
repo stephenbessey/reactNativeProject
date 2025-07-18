@@ -1,0 +1,36 @@
+{
+  "expo": {
+    "name": "Workout Partner",
+    "slug": "workout-partner-app",
+    "version": "1.0.0",
+    "scheme": "workout-partner-app",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "userInterfaceStyle": "light",
+    "splash": {
+      "image": "./assets/splash.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#ffffff"
+    },
+    "assetBundlePatterns": [
+      "**/*"
+    ],
+    "ios": {
+      "supportsTablet": true,
+      "icon": "./assets/icon.png",
+      "bundleIdentifier": "com.anonymous.workoutpartnerapp"
+    },
+    "android": {
+      "icon": "./assets/icon.png",
+      "package": "com.anonymous.workoutpartnerapp"
+    },
+    "web": {
+      "favicon": "./assets/favicon.png",
+      "bundler": "metro"
+    }
+  },
+  "plugins": [
+    "expo-router",
+    "expo-font"
+  ]
+}
