@@ -3,7 +3,7 @@ import { View, Text, StyleSheet, Pressable } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { Exercise } from '../../contexts/WorkoutContext';
 import { useTheme } from '../../contexts/ThemeContext';
-import { NumberInput } from './NumberInput';
+import { NumberInput } from '../workout/NumberInput';
 
 interface SetTrackerProps {
   exercise: Exercise;

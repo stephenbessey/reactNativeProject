@@ -7,37 +7,25 @@
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "light",
+    "newArchEnabled": true,
     "splash": {
       "image": "./assets/splash.png",
       "resizeMode": "contain",
       "backgroundColor": "#ffffff"
     },
-    "assetBundlePatterns": [
-      "**/*"
-    ],
+    "assetBundlePatterns": ["**/*"],
     "ios": {
       "supportsTablet": true,
       "icon": "./assets/icon.png",
-      "bundleIdentifier": "com.workoutpartner.app",
-      "infoPlist": {
-        "NSCameraUsageDescription": "This app uses the camera to capture exercise form photos for progress tracking.",
-        "NSPhotoLibraryUsageDescription": "This app needs access to your photo library to save workout progress photos.",
-        "NSMotionUsageDescription": "This app uses motion sensors to automatically count exercise repetitions."
-      }
+      "bundleIdentifier": "com.anonymous.workoutpartnerapp"
     },
     "android": {
       "icon": "./assets/icon.png",
-      "package": "com.workoutpartner.app",
+      "package": "com.anonymous.workoutpartnerapp",
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#ffffff"
-      },
-      "permissions": [
-        "CAMERA",
-        "READ_EXTERNAL_STORAGE",
-        "WRITE_EXTERNAL_STORAGE",
-        "VIBRATE"
-      ]
+      }
     },
     "web": {
       "favicon": "./assets/favicon.png",
@@ -45,23 +33,7 @@
     },
     "plugins": [
       "expo-router",
-      "expo-font",
-      [
-        "expo-camera",
-        {
-          "cameraPermission": "Allow Workout Partner to access your camera to capture exercise form photos."
-        }
-      ],
-      [
-        "expo-media-library",
-        {
-          "photosPermission": "Allow Workout Partner to access your photos to save workout progress images.",
-          "savePhotosPermission": "Allow Workout Partner to save workout photos to your library."
-        }
-      ]
-    ],
-    "experiments": {
-      "typedRoutes": false
-    }
+      "expo-font"
+    ]
   }
 }

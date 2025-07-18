@@ -1,7 +1,7 @@
 import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 import { UserType } from '../../types';
-import { getWorkflowDescription, getNextStepsText } from '../factories';
+import { getWorkflowDescription, getNextStepsText } from "../../factories";
 import { commonStyles } from '../../styles/commonStyles';
 import { COLORS, DIMENSIONS } from '../../constants';
 

@@ -5,9 +5,9 @@ import { Exercise, ExerciseSet } from '../../contexts/WorkoutContext';
 import { useTheme } from '../../contexts/ThemeContext';
 import { PhotoCapture } from './PhotoCapture';
 import { SetTracker } from './SetTracker';
-import { RestTimer } from './RestTimer';
-import { MotionDetector } from './MotionDetector';
-import { createSetId } from '../factories';
+import { RestTimer } from '../workout/RestTimer';
+import { MotionDetector } from '../motion/MotionDetector';
+import { createSetId } from "../../factories";
 
 interface ExerciseCardProps {
   exercise: Exercise;

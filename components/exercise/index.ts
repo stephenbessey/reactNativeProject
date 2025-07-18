@@ -1,4 +1,4 @@
 export * from './ExerciseCard';
-export * from './ExerciseHeader';
-export * from './ExerciseProgress';
 export * from './SetTracker';
+export * from './PhotoCapture';
+export * from './NumberInput';

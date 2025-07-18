@@ -9,7 +9,7 @@ import { PartnersSection } from '../components/sections/PartnersSection';
 import { WorkoutDaysSection } from '../components/sections/WorkoutDaysSection';
 import { WorkflowSection } from '../components/sections/WorkflowSection';
 import { useWorkoutNavigation } from '../hooks/useWorkoutNavigation';
-import { parseJsonSafely } from '../lib/transformers';
+import { parseJsonSafely } from "../lib/transformers";
 import { User, UserType } from '../types';
 import { commonStyles } from '../styles/commonStyles';
 

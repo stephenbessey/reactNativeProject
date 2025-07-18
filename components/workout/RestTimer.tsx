@@ -3,7 +3,7 @@ import { View, Text, Modal, StyleSheet, Pressable, Animated } from 'react-native
 import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '../../contexts/ThemeContext';
 import { REST_TIMER } from '../../constants/workoutConstants';
-import { formatDuration } from '../formatters';
+import { formatDuration } from "../../formatters";
 
 interface RestTimerProps {
   visible: boolean;

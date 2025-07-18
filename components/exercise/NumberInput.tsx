@@ -45,27 +45,31 @@ export const NumberInput: React.FC<NumberInputProps> = ({
 
   return (
     <View style={styles.container}>
-      {icon && (
-        <Ionicons 
-          name={icon} 
-          size={16} 
-          color={theme.colors.primary} 
-          style={styles.icon} 
-        />
-      )}
-      
-      <Text style={styles.label}>{label}</Text>
+      <View style={styles.labelContainer}>
+        {icon && (
+          <Ionicons 
+            name={icon} 
+            size={16} 
+            color={theme.colors?.primary || '#007AFF'} 
+            style={styles.icon} 
+          />
+        )}
+        <Text style={styles.label}>{label}</Text>
+      </View>
       
       <View style={styles.inputContainer}>
         <Pressable
-          style={[styles.button, value <= min && styles.disabledButton]}
+          style={[
+            styles.button, 
+            value <= min && styles.disabledButton
+          ]}
           onPress={handleDecrement}
           disabled={value <= min}
         >
           <Ionicons 
             name="remove" 
             size={16} 
-            color={value <= min ? theme.colors.textTertiary : theme.colors.primary} 
+            color={value <= min ? (theme.colors?.textTertiary || '#999') : (theme.colors?.primary || '#007AFF')} 
           />
         </Pressable>
 
@@ -79,14 +83,17 @@ export const NumberInput: React.FC<NumberInputProps> = ({
         />
 
         <Pressable
-          style={[styles.button, value >= max && styles.disabledButton]}
+          style={[
+            styles.button, 
+            value >= max && styles.disabledButton
+          ]}
           onPress={handleIncrement}
           disabled={value >= max}
         >
           <Ionicons 
             name="add" 
             size={16} 
-            color={value >= max ? theme.colors.textTertiary : theme.colors.primary} 
+            color={value >= max ? (theme.colors?.textTertiary || '#999') : (theme.colors?.primary || '#007AFF')} 
           />
         </Pressable>
       </View>
@@ -96,43 +103,49 @@ export const NumberInput: React.FC<NumberInputProps> = ({
 
 const createStyles = (theme: any) => StyleSheet.create({
   container: {
+    marginBottom: 16,
+  },
+  labelContainer: {
+    flexDirection: 'row',
     alignItems: 'center',
-    flex: 1,
+    marginBottom: 8,
   },
   icon: {
-    marginBottom: theme.spacing.xs,
+    marginRight: 6,
   },
   label: {
-    fontSize: theme.typography.fontSizes.xs,
-    fontWeight: theme.typography.fontWeights.medium,
-    color: theme.colors.textSecondary,
-    marginBottom: theme.spacing.xs,
-    textAlign: 'center',
+    fontSize: 14,
+    fontWeight: '500',
+    color: theme.colors?.text || '#333',
   },
   inputContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: theme.colors.surface,
-    borderRadius: theme.borderRadius.md,
-    borderWidth: 1,
-    borderColor: theme.colors.border,
+    backgroundColor: theme.colors?.surface || '#f8f8f8',
+    borderRadius: 8,
+    paddingHorizontal: 4,
   },
   button: {
-    width: 32,
-    height: 32,
+    width: 40,
+    height: 40,
     justifyContent: 'center',
     alignItems: 'center',
+    borderRadius: 6,
   },
   disabledButton: {
     opacity: 0.5,
   },
   input: {
     flex: 1,
-    fontSize: theme.typography.fontSizes.md,
-    fontWeight: theme.typography.fontWeights.semibold,
-    color: theme.colors.text,
-    paddingVertical: theme.spacing.sm,
-    textAlign: 'center',
-    minWidth: 60,
+    height: 40,
+    fontSize: 16,
+    fontWeight: '600',
+    color: theme.colors?.text || '#333',
+    backgroundColor: 'white',
+    borderRadius: 4,
+    marginHorizontal: 4,
+    paddingHorizontal: 8,
+    borderWidth: 1,
+    borderColor: theme.colors?.border || '#e0e0e0',
   },
 });

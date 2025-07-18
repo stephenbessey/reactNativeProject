@@ -4,12 +4,12 @@ import { useLocalSearchParams } from 'expo-router';
 import { ScreenContainer } from '../components/ScreenContainer';
 import { SelectionButton } from '../components/SelectionButton';
 import { PageHeader } from '../components/sections/PageHeader';
-import { ExerciseCard } from '../components/workout/ExerciseCard';
-import { AddExerciseModal } from '../components/workout/AddExerciseModal';
+import { ExerciseCard } from '../components/exercise/ExerciseCard';
+import { AddExerciseModal } from '../components/forms/AddExerciseModal';
 import { WorkoutTimer } from '../components/workout/WorkoutTimer';
 import { useWorkout, Workout, Exercise } from '../contexts/WorkoutContext';
 import { useTheme } from '../contexts/ThemeContext';
-import { createWorkoutId, createExerciseId } from '../factories';
+import { createWorkoutId, createExerciseId } from "../factories";
 
 export default function WorkoutDetailScreen() {
   const { workoutName, partnerId, selectedDays } = useLocalSearchParams<Record<string, string>>();

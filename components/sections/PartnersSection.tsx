@@ -2,7 +2,7 @@ import React from 'react';
 import { View, Text } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { WorkoutPartner, UserType } from '../../types';
-import { getPartnerLabel } from '../factories';
+import { getPartnerLabel } from "../../factories";
 import { commonStyles } from '../../styles/commonStyles';
 import { COLORS, DIMENSIONS } from '../../constants';
 
