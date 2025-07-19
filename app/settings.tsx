@@ -45,11 +45,11 @@ const SettingItem: React.FC<SettingItemProps> = ({
 };
 
 export default function SettingsScreen() {
-  const { theme, isDarkMode, toggleTheme } = useTheme();
+  const { theme } = useTheme();
   const { saveWorkoutData, loadWorkoutData, state } = useWorkout();
   const [autoSave, setAutoSave] = useState(true);
-  const [motionSensitivity, setMotionSensitivity] = useState('medium');
   const [restTimerSound, setRestTimerSound] = useState(true);
+  const [notificationsEnabled, setNotificationsEnabled] = useState(true);
   
   const styles = createStyles(theme);
 
@@ -109,8 +109,8 @@ export default function SettingsScreen() {
           style: 'destructive',
           onPress: () => {
             setAutoSave(true);
-            setMotionSensitivity('medium');
             setRestTimerSound(true);
+            setNotificationsEnabled(true);
             Alert.alert('Success', 'Settings have been reset to defaults');
           },
         },
@@ -132,28 +132,6 @@ export default function SettingsScreen() {
       />
 
       <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
-        {/* Appearance Section */}
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Appearance</Text>
-          
-          <SettingItem
-            icon="moon"
-            title="Dark Mode"
-            subtitle="Use dark theme throughout the app"
-            rightElement={
-              <Switch
-                value={isDarkMode}
-                onValueChange={toggleTheme}
-                trackColor={{
-                  false: theme.colors.border,
-                  true: theme.colors.primary + '50',
-                }}
-                thumbColor={isDarkMode ? theme.colors.primary : theme.colors.surface}
-              />
-            }
-          />
-        </View>
-
         {/* Workout Settings */}
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Workout Settings</Text>
@@ -193,21 +171,19 @@ export default function SettingsScreen() {
           />
 
           <SettingItem
-            icon="analytics"
-            title="Motion Sensitivity"
-            subtitle={`Current: ${motionSensitivity.charAt(0).toUpperCase() + motionSensitivity.slice(1)}`}
+            icon="notifications-outline"
+            title="Push Notifications"
+            subtitle="Receive workout reminders and updates"
             rightElement={
-              <View style={styles.sensitivityContainer}>
-                {['low', 'medium', 'high'].map((level) => (
-                  <SelectionButton
-                    key={level}
-                    title={level.charAt(0).toUpperCase() + level.slice(1)}
-                    isSelected={motionSensitivity === level}
-                    onPress={() => setMotionSensitivity(level)}
-                    variant="secondary"
-                  />
-                ))}
-              </View>
+              <Switch
+                value={notificationsEnabled}
+                onValueChange={setNotificationsEnabled}
+                trackColor={{
+                  false: theme.colors.border,
+                  true: theme.colors.primary + '50',
+                }}
+                thumbColor={notificationsEnabled ? theme.colors.primary : theme.colors.surface}
+              />
             }
           />
         </View>
@@ -305,6 +281,7 @@ export default function SettingsScreen() {
             }}
           />
         </View>
+
         <View style={styles.section}>
           <Text style={[styles.sectionTitle, styles.dangerTitle]}>Danger Zone</Text>
           
@@ -387,10 +364,6 @@ const createStyles = (theme: any) => StyleSheet.create({
   },
   settingRight: {
     alignItems: 'flex-end',
-  },
-  sensitivityContainer: {
-    flexDirection: 'row',
-    gap: theme.spacing.xs,
   },
   storageSize: {
     fontSize: theme.typography.fontSizes.sm,

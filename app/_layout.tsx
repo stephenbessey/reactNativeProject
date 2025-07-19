@@ -66,6 +66,25 @@ export default function RootLayout() {
               headerBackTitle: "Back"
             }} 
           />
+          <Stack.Screen 
+            name="todays-workout" 
+            options={{
+              title: "Today's Workout",
+              headerBackTitle: "Back"
+            }} 
+          />
+          <Stack.Screen 
+            name="workout-assignment" 
+            options={{ title: "Assign Workout", headerBackTitle: "Back" }} 
+          />
+          <Stack.Screen 
+            name="perform-workout" 
+            options={{ title: "Perform Workout", headerBackTitle: "Back" }} 
+          />
+          <Stack.Screen 
+            name="create-workout-template" 
+            options={{ title: "Create Template", headerBackTitle: "Back" }} 
+          />
         </Stack>
       </WorkoutProvider>
     </ThemeProvider>

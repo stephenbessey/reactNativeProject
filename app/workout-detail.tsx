@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { View, Text, ScrollView, Alert, StyleSheet } from 'react-native';
-import { useLocalSearchParams } from 'expo-router';
+import { useLocalSearchParams, router } from 'expo-router';
 import { ScreenContainer } from '../components/ScreenContainer';
 import { SelectionButton } from '../components/SelectionButton';
 import { PageHeader } from '../components/sections/PageHeader';
@@ -28,6 +28,15 @@ export default function WorkoutDetailScreen() {
       initializeWorkout();
     }
   }, []);
+
+  // Handle navigation after workout ends
+  useEffect(() => {
+    if (workoutStarted && !state.isWorkoutActive && !state.currentWorkout && !localWorkout) {
+      // Workout has ended, navigate back to summary
+      console.log('Workout completed, navigating to summary...');
+      router.replace('/summary');
+    }
+  }, [workoutStarted, state.isWorkoutActive, state.currentWorkout, localWorkout]);
 
   const initializeWorkout = (): void => {
     const newWorkout: Workout = {
@@ -102,6 +111,11 @@ export default function WorkoutDetailScreen() {
           onPress: () => {
             endWorkout();
             setWorkoutStarted(false);
+            setLocalWorkout(null); // Clear local workout
+            // Navigate immediately after ending workout
+            setTimeout(() => {
+              router.replace('/summary');
+            }, 500);
           },
         },
       ]
@@ -123,16 +137,43 @@ export default function WorkoutDetailScreen() {
     }
   };
 
+  const handleBackToSummary = (): void => {
+    router.back();
+  };
+
   const completedExercises = currentWorkout?.exercises.filter(ex => ex.isCompleted).length || 0;
   const totalExercises = currentWorkout?.exercises.length || 0;
   const workoutProgress = totalExercises > 0 ? (completedExercises / totalExercises) * 100 : 0;
 
   const styles = createStyles(theme);
 
+  // Show loading state briefly while initializing (but not if workout was just completed)
+  if (!currentWorkout && workoutName && !workoutStarted) {
+    return (
+      <ScreenContainer>
+        <PageHeader title="Preparing Workout..." />
+        <View style={styles.loadingContainer}>
+          <Text style={styles.loadingText}>Setting up your workout...</Text>
+        </View>
+      </ScreenContainer>
+    );
+  }
+
+  // If no current workout and no workout name, show error state
   if (!currentWorkout) {
     return (
       <ScreenContainer>
-        <PageHeader title="Loading..." />
+        <PageHeader title="Workout Not Found" />
+        <View style={styles.errorContainer}>
+          <Text style={styles.errorText}>
+            Unable to load workout. Please try again.
+          </Text>
+          <SelectionButton
+            title="Go Back"
+            onPress={handleBackToSummary}
+            variant="primary"
+          />
+        </View>
       </ScreenContainer>
     );
   }
@@ -264,6 +305,30 @@ const createStyles = (theme: any) => StyleSheet.create({
   emptyStateText: {
     fontSize: theme.typography.fontSizes.md,
     color: theme.colors.textTertiary,
+    textAlign: 'center',
+    lineHeight: 24,
+  },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: theme.spacing.xxl,
+  },
+  loadingText: {
+    fontSize: theme.typography.fontSizes.lg,
+    color: theme.colors.textSecondary,
+    textAlign: 'center',
+  },
+  errorContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: theme.spacing.xxl,
+    gap: theme.spacing.lg,
+  },
+  errorText: {
+    fontSize: theme.typography.fontSizes.md,
+    color: theme.colors.textSecondary,
     textAlign: 'center',
     lineHeight: 24,
   },
