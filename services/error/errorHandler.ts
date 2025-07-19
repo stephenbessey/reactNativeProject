@@ -1,26 +1,5 @@
 import { Alert } from 'react-native';
-
-export enum WorkoutErrorCode {
-  CAMERA_PERMISSION_DENIED = 'CAMERA_PERMISSION_DENIED',
-  MEDIA_LIBRARY_PERMISSION_DENIED = 'MEDIA_LIBRARY_PERMISSION_DENIED',
-  MOTION_DETECTION_FAILED = 'MOTION_DETECTION_FAILED',
-  DATA_SAVE_FAILED = 'DATA_SAVE_FAILED',
-  DATA_LOAD_FAILED = 'DATA_LOAD_FAILED',
-  INVALID_EXERCISE_DATA = 'INVALID_EXERCISE_DATA',
-  WORKOUT_START_FAILED = 'WORKOUT_START_FAILED',
-  PHOTO_CAPTURE_FAILED = 'PHOTO_CAPTURE_FAILED'
-}
-
-export class WorkoutError extends Error {
-  constructor(
-    message: string,
-    public code: WorkoutErrorCode,
-    public context?: Record<string, unknown>
-  ) {
-    super(message);
-    this.name = 'WorkoutError';
-  }
-}
+import { WorkoutError, WorkoutErrorCode } from './WorkoutError';
 
 interface ErrorHandlerOptions {
   showUserAlert?: boolean;
@@ -53,8 +32,6 @@ const getUserFriendlyErrorMessage = (error: Error | WorkoutError): string => {
     switch (error.code) {
       case WorkoutErrorCode.CAMERA_PERMISSION_DENIED:
         return 'Camera access is required to capture exercise photos. Please enable camera permissions in your device settings.';
-      case WorkoutErrorCode.MEDIA_LIBRARY_PERMISSION_DENIED:
-        return 'Photo library access is required to save exercise photos. Please enable photo permissions in your device settings.';
       case WorkoutErrorCode.MOTION_DETECTION_FAILED:
         return 'Unable to detect movement. Try adjusting sensitivity or use manual counting.';
       case WorkoutErrorCode.DATA_SAVE_FAILED:
@@ -73,12 +50,4 @@ const getUserFriendlyErrorMessage = (error: Error | WorkoutError): string => {
   }
   
   return 'An unexpected error occurred. Please try again.';
-};
-
-export const createWorkoutError = (
-  code: WorkoutErrorCode,
-  message: string,
-  context?: Record<string, unknown>
-): WorkoutError => {
-  return new WorkoutError(message, code, context);
 };

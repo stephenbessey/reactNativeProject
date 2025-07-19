@@ -9,17 +9,18 @@ import { AddExerciseModal } from '../components/forms/AddExerciseModal';
 import { WorkoutTimer } from '../components/workout/WorkoutTimer';
 import { useWorkout, Workout, Exercise } from '../contexts/WorkoutContext';
 import { useTheme } from '../contexts/ThemeContext';
-import { createWorkoutId, createExerciseId } from "../factories";
+import { createWorkoutId, createExerciseId } from '../factories/IdFactory';
 
 export default function WorkoutDetailScreen() {
   const { workoutName, partnerId, selectedDays } = useLocalSearchParams<Record<string, string>>();
   const [isAddExerciseModalVisible, setIsAddExerciseModalVisible] = useState(false);
   const [workoutStarted, setWorkoutStarted] = useState(false);
-  
+  const [localWorkout, setLocalWorkout] = useState<Workout | null>(null);
+
   const { state, startWorkout, endWorkout, updateExercise } = useWorkout();
   const { theme } = useTheme();
 
-  const currentWorkout = state.currentWorkout;
+  const currentWorkout = state.currentWorkout || localWorkout;
   const isWorkoutActive = state.isWorkoutActive;
 
   useEffect(() => {
@@ -38,12 +39,11 @@ export default function WorkoutDetailScreen() {
       partnerId: partnerId || undefined,
     };
 
-    startWorkout(newWorkout);
+    // Don't start the workout yet - just create it locally
+    setLocalWorkout(newWorkout);
   };
 
   const handleAddExercise = (exercise: Omit<Exercise, 'id' | 'isCompleted' | 'completedSets'>): void => {
-    if (!currentWorkout) return;
-
     const newExercise: Exercise = {
       ...exercise,
       id: createExerciseId(),
@@ -51,15 +51,21 @@ export default function WorkoutDetailScreen() {
       completedSets: [],
     };
 
-    const updatedExercises = [...currentWorkout.exercises, newExercise];
-    
-    // Update the current workout with new exercise
-    const updatedWorkout = {
-      ...currentWorkout,
-      exercises: updatedExercises,
-    };
+    if (currentWorkout) {
+      const updatedWorkout = {
+        ...currentWorkout,
+        exercises: [...currentWorkout.exercises, newExercise],
+      };
 
-    startWorkout(updatedWorkout);
+      if (state.isWorkoutActive) {
+        // Update the active workout
+        startWorkout(updatedWorkout);
+      } else {
+        // Update the local workout
+        setLocalWorkout(updatedWorkout);
+      }
+    }
+
     setIsAddExerciseModalVisible(false);
   };
 
@@ -69,13 +75,19 @@ export default function WorkoutDetailScreen() {
       return;
     }
 
-    const updatedWorkout = {
-      ...currentWorkout,
-      startTime: new Date(),
-    };
+    try {
+      const updatedWorkout = {
+        ...currentWorkout,
+        startTime: new Date(),
+      };
 
-    startWorkout(updatedWorkout);
-    setWorkoutStarted(true);
+      startWorkout(updatedWorkout);
+      setWorkoutStarted(true);
+      setLocalWorkout(null); // Clear local workout since it's now active
+    } catch (error) {
+      console.error('Failed to start workout:', error);
+      Alert.alert('Error', 'Failed to start workout. Please try again.');
+    }
   };
 
   const handleEndWorkout = (): void => {
@@ -97,7 +109,18 @@ export default function WorkoutDetailScreen() {
   };
 
   const handleExerciseUpdate = (exerciseId: string, updates: Partial<Exercise>): void => {
-    updateExercise(exerciseId, updates);
+    if (state.isWorkoutActive) {
+      updateExercise(exerciseId, updates);
+    } else if (localWorkout) {
+      // Update local workout
+      const updatedExercises = localWorkout.exercises.map(ex =>
+        ex.id === exerciseId ? { ...ex, ...updates } : ex
+      );
+      setLocalWorkout({
+        ...localWorkout,
+        exercises: updatedExercises,
+      });
+    }
   };
 
   const completedExercises = currentWorkout?.exercises.filter(ex => ex.isCompleted).length || 0;
@@ -116,13 +139,13 @@ export default function WorkoutDetailScreen() {
 
   return (
     <ScreenContainer>
-      <PageHeader 
+      <PageHeader
         title={currentWorkout.name}
         subtitle={`${completedExercises}/${totalExercises} exercises completed`}
       />
 
-      {workoutStarted && (
-        <WorkoutTimer 
+      {workoutStarted && currentWorkout.startTime && (
+        <WorkoutTimer
           startTime={currentWorkout.startTime}
           style={styles.timer}
         />
@@ -130,11 +153,11 @@ export default function WorkoutDetailScreen() {
 
       <View style={styles.progressContainer}>
         <View style={styles.progressBar}>
-          <View 
+          <View
             style={[
-              styles.progressFill, 
+              styles.progressFill,
               { width: `${workoutProgress}%` }
-            ]} 
+            ]}
           />
         </View>
         <Text style={styles.progressText}>
@@ -142,7 +165,7 @@ export default function WorkoutDetailScreen() {
         </Text>
       </View>
 
-      <ScrollView 
+      <ScrollView
         style={styles.exerciseList}
         showsVerticalScrollIndicator={false}
       >
@@ -151,7 +174,7 @@ export default function WorkoutDetailScreen() {
             key={exercise.id}
             exercise={exercise}
             onUpdate={(updates) => handleExerciseUpdate(exercise.id, updates)}
-            isWorkoutActive={workoutStarted}
+            isWorkoutActive={workoutStarted && isWorkoutActive}
           />
         ))}
 

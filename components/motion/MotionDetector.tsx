@@ -1,16 +1,8 @@
-import React, { useState, useEffect, useRef } from 'react';
-import { View, Text, Modal, StyleSheet, Pressable, Animated } from 'react-native';
-import { Accelerometer } from 'expo-sensors';
+import React, { useState, useEffect } from 'react';
+import { View, Text, Modal, StyleSheet, Pressable } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '../../contexts/ThemeContext';
-import { MOTION_DETECTION } from '../../constants/workoutConstants';
-import { handleWorkoutError, WorkoutErrorCode } from '../services/error';
 import { useMotionDetection } from '../../hooks/useMotionDetection';
-import { MotionDetectorHeader } from './motion/MotionDetectorHeader';
-import { CalibrationDisplay } from './motion/CalibrationDisplay';
-import { DetectionDisplay } from './motion/DetectionDisplay';
-import { MotionControls } from './motion/MotionControls';
-import { MotionInstructions } from './motion/MotionInstructions';
 
 interface MotionDetectorProps {
   visible: boolean;
@@ -25,7 +17,7 @@ export const MotionDetector: React.FC<MotionDetectorProps> = ({
   onDetection,
   onClose,
 }) => {
-  const [countdown, setCountdown] = useState(MOTION_DETECTION.CALIBRATION_COUNTDOWN_SECONDS);
+  const [countdown, setCountdown] = useState(3);
   const { theme } = useTheme();
   const styles = createStyles(theme);
 
@@ -33,15 +25,13 @@ export const MotionDetector: React.FC<MotionDetectorProps> = ({
     isDetecting,
     detectedReps,
     isCalibrating,
-    detectionThreshold,
     startCalibration,
     stopDetection,
-    adjustSensitivity,
     resetDetection
   } = useMotionDetection({
     targetReps,
     onDetection,
-    onError: (error) => handleWorkoutError(error)
+    onError: (error) => console.error('Motion detection error:', error)
   });
 
   useEffect(() => {
@@ -53,28 +43,16 @@ export const MotionDetector: React.FC<MotionDetectorProps> = ({
   }, [visible, resetDetection, stopDetection]);
 
   const handleStartCalibration = (): void => {
-    try {
-      setCountdown(MOTION_DETECTION.CALIBRATION_COUNTDOWN_SECONDS);
-      startCalibration();
-      startCountdownTimer();
-    } catch (error) {
-      handleWorkoutError(
-        error instanceof Error 
-          ? error 
-          : new Error('Failed to start motion detection'),
-        { title: 'Motion Detection Error' }
-      );
-    }
-  };
-
-  const startCountdownTimer = (): void => {
+    setCountdown(3);
+    startCalibration();
+    
     const timer = setInterval(() => {
-      setCountdown(previousCountdown => {
-        if (previousCountdown <= 1) {
+      setCountdown(prev => {
+        if (prev <= 1) {
           clearInterval(timer);
           return 0;
         }
-        return previousCountdown - 1;
+        return prev - 1;
       });
     }, 1000);
   };
@@ -84,45 +62,64 @@ export const MotionDetector: React.FC<MotionDetectorProps> = ({
     onDetection(finalRepCount);
   };
 
-  const handleSensitivityIncrease = (): void => {
-    adjustSensitivity(0.2);
-  };
-
-  const handleSensitivityDecrease = (): void => {
-    adjustSensitivity(-0.2);
-  };
-
   if (!visible) return null;
 
   return (
     <Modal visible={visible} animationType="slide" transparent>
       <View style={styles.overlay}>
         <View style={styles.container}>
-          <MotionDetectorHeader onClose={onClose} />
+          <View style={styles.header}>
+            <Text style={styles.title}>Motion Rep Counter</Text>
+            <Pressable onPress={onClose} style={styles.closeButton}>
+              <Ionicons name="close" size={24} color={theme.colors.text} />
+            </Pressable>
+          </View>
 
           <View style={styles.statusContainer}>
             {isCalibrating ? (
-              <CalibrationDisplay countdown={countdown} />
+              <View style={styles.calibrationContainer}>
+                <Text style={styles.calibrationTitle}>Get Ready</Text>
+                <Text style={styles.countdownText}>{countdown}</Text>
+                <Text style={styles.calibrationSubtext}>
+                  Hold your device steady and prepare to start your exercise
+                </Text>
+              </View>
             ) : (
-              <DetectionDisplay
-                detectedReps={detectedReps}
-                targetReps={targetReps}
-                isDetecting={isDetecting}
-              />
+              <View style={styles.detectionContainer}>
+                <View style={styles.repCounter}>
+                  <Text style={styles.repCountText}>{detectedReps}</Text>
+                  <Text style={styles.repTargetText}>/ {targetReps} reps</Text>
+                </View>
+
+                {isDetecting && (
+                  <Text style={styles.instructionText}>
+                    Perform your exercise - movement will be detected automatically
+                  </Text>
+                )}
+              </View>
             )}
           </View>
 
-          <MotionControls
-            isDetecting={isDetecting}
-            isCalibrating={isCalibrating}
-            onStartCalibration={handleStartCalibration}
-            onStopDetection={stopDetection}
-            onCompleteManually={handleManualComplete}
-            onSensitivityIncrease={handleSensitivityIncrease}
-            onSensitivityDecrease={handleSensitivityDecrease}
-          />
+          <View style={styles.controls}>
+            {!isDetecting && !isCalibrating && (
+              <Pressable style={styles.startButton} onPress={handleStartCalibration}>
+                <Ionicons name="play" size={24} color="white" />
+                <Text style={styles.startButtonText}>Start Detection</Text>
+              </Pressable>
+            )}
 
-          <MotionInstructions />
+            {isDetecting && (
+              <View style={styles.actionButtons}>
+                <Pressable style={styles.completeButton} onPress={handleManualComplete}>
+                  <Text style={styles.completeButtonText}>Complete Set</Text>
+                </Pressable>
+                
+                <Pressable style={styles.stopButton} onPress={stopDetection}>
+                  <Text style={styles.stopButtonText}>Stop</Text>
+                </Pressable>
+              </View>
+            )}
+          </View>
         </View>
       </View>
     </Modal>
@@ -145,8 +142,122 @@ const createStyles = (theme: any) => StyleSheet.create({
     maxWidth: 400,
     ...theme.shadows.large,
   },
+  header: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: theme.spacing.xl,
+  },
+  title: {
+    fontSize: theme.typography.fontSizes.xl,
+    fontWeight: theme.typography.fontWeights.bold,
+    color: theme.colors.text,
+  },
+  closeButton: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    backgroundColor: theme.colors.surface,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
   statusContainer: {
     alignItems: 'center',
     marginBottom: theme.spacing.xl,
+  },
+  calibrationContainer: {
+    alignItems: 'center',
+    paddingVertical: theme.spacing.xl,
+  },
+  calibrationTitle: {
+    fontSize: theme.typography.fontSizes.lg,
+    fontWeight: theme.typography.fontWeights.semibold,
+    color: theme.colors.text,
+    marginBottom: theme.spacing.md,
+  },
+  countdownText: {
+    fontSize: 64,
+    fontWeight: theme.typography.fontWeights.bold,
+    color: theme.colors.primary,
+    marginBottom: theme.spacing.md,
+  },
+  calibrationSubtext: {
+    fontSize: theme.typography.fontSizes.sm,
+    color: theme.colors.textSecondary,
+    textAlign: 'center',
+    lineHeight: 20,
+  },
+  detectionContainer: {
+    alignItems: 'center',
+    width: '100%',
+  },
+  repCounter: {
+    alignItems: 'center',
+    marginBottom: theme.spacing.lg,
+  },
+  repCountText: {
+    fontSize: 72,
+    fontWeight: theme.typography.fontWeights.bold,
+    color: theme.colors.primary,
+    lineHeight: 80,
+  },
+  repTargetText: {
+    fontSize: theme.typography.fontSizes.lg,
+    color: theme.colors.textSecondary,
+    fontWeight: theme.typography.fontWeights.medium,
+  },
+  instructionText: {
+    fontSize: theme.typography.fontSizes.sm,
+    color: theme.colors.textTertiary,
+    textAlign: 'center',
+    fontStyle: 'italic',
+  },
+  controls: {
+    marginBottom: theme.spacing.lg,
+  },
+  startButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: theme.colors.primary,
+    paddingVertical: theme.spacing.md,
+    paddingHorizontal: theme.spacing.xl,
+    borderRadius: theme.borderRadius.lg,
+    gap: theme.spacing.sm,
+  },
+  startButtonText: {
+    color: 'white',
+    fontSize: theme.typography.fontSizes.md,
+    fontWeight: theme.typography.fontWeights.semibold,
+  },
+  actionButtons: {
+    flexDirection: 'row',
+    gap: theme.spacing.md,
+  },
+  completeButton: {
+    flex: 1,
+    backgroundColor: theme.colors.success,
+    paddingVertical: theme.spacing.md,
+    borderRadius: theme.borderRadius.lg,
+    alignItems: 'center',
+  },
+  completeButtonText: {
+    color: 'white',
+    fontSize: theme.typography.fontSizes.md,
+    fontWeight: theme.typography.fontWeights.semibold,
+  },
+  stopButton: {
+    flex: 1,
+    backgroundColor: theme.colors.surface,
+    paddingVertical: theme.spacing.md,
+    borderRadius: theme.borderRadius.lg,
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: theme.colors.border,
+  },
+  stopButtonText: {
+    color: theme.colors.text,
+    fontSize: theme.typography.fontSizes.md,
+    fontWeight: theme.typography.fontWeights.medium,
   },
 });

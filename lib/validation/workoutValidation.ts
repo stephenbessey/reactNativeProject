@@ -1,6 +1,6 @@
-import { WORKOUT_LIMITS } from '../constants/workoutConstants';
-import { Exercise } from '../contexts/WorkoutContext';
-import { WorkoutError, WorkoutErrorCode } from './errorHandling';
+import { WORKOUT_LIMITS } from '../../constants/workoutConstants';
+import { Exercise } from '../../contexts/WorkoutContext';
+import { WorkoutError, WorkoutErrorCode } from '../../services/error/WorkoutError';
 
 export interface ExerciseValidationResult {
   isValid: boolean;
